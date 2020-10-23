@@ -1,0 +1,62 @@
+"","Category","RGS","AC","PValue"
+"46","Stress response: pathogen",16,177,8.11369444748193e-12
+"61","Unknown",107,8160,1.68636047287595e-05
+"7","Extracellular material: collagen",9,185,3.09547298457488e-05
+"33","Proteolysis general: aspartate",4,33,0.000210774589462592
+"54","Transmembrane transport: heme",2,8,0.00268645214536384
+"44","Stress response: C-type Lectin",7,257,0.00557442774877484
+"2","Cilia: IFT",2,38,0.0398115255676917
+"10","Extracellular material: secreted protein",2,43,0.0492436301226329
+"17","Metabolism: creatine kinase",1,6,0.0538429959275232
+"39","Signaling: FGF",1,6,0.0538429959275232
+"57","Transmembrane transport: nucleotide gated channel",1,8,0.0686851428122148
+"9","Extracellular material: PGI",2,53,0.0701724132998902
+"60","Transmembrane transport: sugar",1,10,0.0832935477386351
+"35","Proteolysis general: lysozyme",1,11,0.0905112541213932
+"23","Muscle function",2,62,0.090996575997726
+"13","Lysosome: other",1,12,0.0976719062320494
+"36","Proteolysis general: other",2,68,0.105744198452435
+"15","Metabolism: amino sugar",1,14,0.11182385516227
+"47","Stress response: thioredoxin",1,15,0.118816046754707
+"45","Stress response: detoxification",3,151,0.123067598723364
+"32","Protein modification: methyltransferase",2,75,0.123678967656707
+"4","Cytoskeleton: other",2,77,0.1289293683405
+"52","Transmembrane transport: calcium channel",1,20,0.152956752962368
+"56","Transmembrane transport: nicotinic acid receptor",1,20,0.152956752962368
+"25","Non-coding RNA: linc",3,174,0.164907494731609
+"12","Lysosome: autophagy",1,26,0.192177454448087
+"20","Metabolism: other",3,190,0.196110129944589
+"6","Extracellular Material: chondroitin sulfotransferase",1,27,0.198534657809582
+"1","Chaperone: DnaJ domain",1,31,0.223465170528459
+"11","Lysosome: acid phosphatase",1,31,0.223465170528459
+"18","Metabolism: lipid",6,525,0.244550148039143
+"5","Development: somatic",2,122,0.255639690221477
+"3","Cytoskeleton: microtubule",2,128,0.273057512880757
+"21","Metabolism: short chain dehydrogenase",1,42,0.288082920790044
+"24","Neuronal function: synaptic function",3,244,0.308562002541484
+"55","Transmembrane transport: major facilitator",1,49,0.326364035942358
+"53","Transmembrane transport: extracellular ligand gated channel",1,59,0.377495019578316
+"34","Proteolysis general: inhibitor",1,66,0.410950807207578
+"8","Extracellular material: matrix",1,67,0.415580532377287
+"41","Signaling: other",1,71,0.433736991081555
+"42","Signaling: phosphatase",2,197,0.464624536199383
+"59","Transmembrane transport: solute carrier",2,197,0.464624536199383
+"14","Metabolism: amino acid",1,82,0.480800475090462
+"16","Metabolism: carbohydrate",1,83,0.484879154113444
+"40","Signaling: hedgehog-like",1,90,0.51254332450202
+"48","Transcription factor: homeodomain",1,97,0.538716190836724
+"50","Transcription: chromatin structure",1,105,0.566905264528404
+"19","Metabolism: nucleotide",1,111,0.5869064094445
+"58","Transmembrane transport: potassium channel",1,121,0.618202566503628
+"31","Protein modification: carbohydrate",1,127,0.635826023833597
+"29","Non-coding RNA: snRNA",1,130,0.644329116040627
+"22","mRNA functions: processing",2,279,0.64851262477535
+"28","Non-coding RNA: snoRNA",2,344,0.755421856340312
+"43","Signaling: small GTPase",1,183,0.765610835304061
+"30","Nucleic acid: binding",1,229,0.836697977950507
+"37","Proteolysis proteasome: E3",3,598,0.849578975682202
+"26","Non-coding RNA: miRNA",1,257,0.868909810472028
+"49","Transcription factor: NHR",1,259,0.8709501253286
+"38","Pseudogene",9,1898,0.959416719090728
+"51","Transmembrane protein: seven transmembrane receptor",5,1461,0.988542634355434
+"27","Non-coding RNA: ncRNA",6,7850,1
