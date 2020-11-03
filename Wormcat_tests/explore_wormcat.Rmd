@@ -165,16 +165,6 @@ colnames(merged_df)[1] <- "rRNA Gene Name"
 GenewiseCounts <- GenewiseCounts[!(rownames(GenewiseCounts) %in% rrna),]
 ```
 
-```{r get gene names from biomart, include=FALSE, echo=FALSE, results='hide'}
-#fetching gene names from biomart using ensembl id
-mart <- useDataset("celegans_gene_ensembl", useMart("ensembl"))
-symbol <- getBM(
-  filters="ensembl_gene_id",
-  attributes=c("ensembl_gene_id", "external_gene_name"),
-  values=rownames(GenewiseCounts),
-  mart=mart)
-```
-
 ```{r DGE, include=FALSE, echo=FALSE, results='hide'}
 #creating DGE object, getting dispersion, fitting generalized linear model, and identifying gene names for each ensembl id
 
@@ -209,11 +199,6 @@ if (group_num == 3){
   A_vs_C_lrt <- glmLRT(fit.er, contrast=contrasts[,"A_vs_C"])
   B_vs_C_lrt <- glmLRT(fit.er, contrast=contrasts[,"B_vs_C"])
   
-  #swapping gene symbol in for ensembl id
-  # row.names(A_vs_B_lrt$table) <- symbol$external_gene_name
-  # row.names(A_vs_C_lrt$table) <- symbol$external_gene_name
-  # row.names(B_vs_C_lrt$table) <- symbol$external_gene_name
-  
   #identifying significantly expressed genes based off of trusted edgeR p-values and stats
   A_vs_B_de <- decideTestsDGE(A_vs_B_lrt, adjust.method = "fdr")
   A_vs_C_de <- decideTestsDGE(A_vs_C_lrt, adjust.method = "fdr")
@@ -223,61 +208,16 @@ if (group_num == 3){
   summary(A_vs_C_de)
   summary(B_vs_C_de)
   
-  #heatmap normalization, gene name fetching, and pairwise fetching
   #creating logCPM table containing all samples to be used for heat maps
   logCPM <- cpm(dge.er, prior.count=2, log=TRUE)
   
-  #swapping in gene symbol for ensembl ID
-  # row.names(logCPM) <- symbol$external_gene_name
 
   #subsetting each pairwise comparison
   logCPM_A_vs_B <- logCPM[,grepl("_A|_B", colnames(logCPM))]
   logCPM_A_vs_C <- logCPM[,grepl("_A|_C", colnames(logCPM))]
   logCPM_B_vs_C <- logCPM[,grepl("_B|_C", colnames(logCPM))]
   
-  ### VENN DIAGRAM
-  # print("Three way venn diagram comparison of pair wise differentially expressed genes between three group groups.")
-  # sub_1 <- subset(A_vs_B_de, A_vs_B_de[,1] > 0)
-  # sub_2 <- subset(A_vs_C_de, A_vs_C_de[,1] > 0)
-  # sub_3 <- subset(B_vs_C_de, B_vs_C_de[,1] > 0)
-  # row.names(sub_3)
-  # 
-  # myCol <- brewer.pal(3, "Pastel2")
-  # futile.logger::flog.threshold(futile.logger::ERROR, name = "VennDiagramLogger")
-  # ve <- venn.diagram(x=list(row.names(sub_1), row.names(sub_2), row.names(sub_3)),
-  #            category.names = c("Group A vs Group B" , "Group A vs Group C" , "Group B vs Group C"),
-  #            filename = NULL,
-  #            scaled = TRUE,
-  #            output = TRUE,
-  #            
-  #            # Output features
-  #            imagetype="png",
-  #            height = 200, 
-  #            width = 300, 
-  #            resolution = 300,
-  #            compression = "lzw",
-  #            
-  #            # Circles
-  #            lwd = 2,
-  #            lty = 'blank',
-  #            fill = myCol,
-  #            
-  #            # Numbers
-  #            cex = 2,
-  #            fontface = "bold",
-  #            fontfamily = "sans",
-  #            
-  #            # Set names
-  #            cat.cex = 1,
-  #            cat.fontface = "bold",
-  #            cat.default.pos = "outer",
-  #            cat.pos = c(-27, 27, 135),
-  #            cat.dist = c(0.055, 0.055, 0.085),
-  #            cat.fontfamily = "sans",
-  #            rotation = 1)
-  # grid.newpage()
-  # grid.draw(ve)
-}
+ }
 ```
 
 ```{r A vs B significant, echo=FALSE, results='hide'}
@@ -286,8 +226,6 @@ if (group_num == 3) {
   FC_sub_A_B <- subset(A_vs_B_lrt$table, abs(logFC) >= 1)
   P_FC_sub_A_B <- subset(FC_sub_A_B, PValue <= 0.00001)
   P_FC_sub_A_B
-  # write.table(A_vs_B_lrt$table,"A_vs_B_l2fc_values.txt",sep="\t",row.names=TRUE)
-  # knitr::kable(P_FC_sub_A_B[order(P_FC_sub_A_B$PValue),], caption = "group A vs group B, Significantly Differential Expressed genes shown in volcano plot")
 }
 ```
 
@@ -297,8 +235,6 @@ if (group_num == 3) {
   FC_sub_A_C <- subset(A_vs_C_lrt$table, abs(logFC) >= 1)
   P_FC_sub_A_C <- subset(FC_sub_A_C, PValue <= 0.00001)
   P_FC_sub_A_C
-  # write.table(A_vs_C_lrt$table,"A_vs_C_l2fc_values.txt",sep="\t",row.names=TRUE)
-  # knitr::kable(P_FC_sub_A_C[order(P_FC_sub_A_C$PValue),], caption = "group A vs group C, significantly differentially expressed genes")
  }
 ```
 
@@ -308,35 +244,10 @@ if (group_num == 3) {
   FC_sub_B_C <- subset(B_vs_C_lrt$table, abs(logFC) >= 1)
   P_FC_sub_B_C <- subset(FC_sub_B_C, PValue <= 0.00001)
   P_FC_sub_B_C
-  # write.table(B_vs_C_lrt$table,"B_vs_C_l2fc_values.txt",sep="\t",row.names=TRUE)
-  # knitr::kable(P_FC_sub_B_C[order(P_FC_sub_B_C$PValue),], caption = "group B vs group C, significantly differentially expressed genes")
 }
 ```
 
 ```{r three WC GO, message=FALSE, echo=FALSE, results='hide'}
-#fitting geralized linear model and preparing data for GO
-#getting entrez id from biomart using ensembl id, necessary for running GO
-#mart var assigned earlier in script 
-# genes <- getBM(
-#   filters="ensembl_gene_id",
-#   attributes=c("ensembl_gene_id", "entrezgene_id"),
-#   values=rownames(GenewiseCounts),
-#   mart=mart)
-
-#swapping entrez id in for ensembl id
-# EntGenewiseCounts <- cbind(GenewiseCounts, genes$entrezgene_id)
-# #removing rows where entrez ID is NA, cannot run GO unless an entrez id exists
-# EntGenewiseCounts <- na.omit(EntGenewiseCounts)
-# #removing duplicate entrez IDs
-# entrezCountsUnique <- EntGenewiseCounts[!duplicated(EntGenewiseCounts[,ncol(EntGenewiseCounts)]),]
-# #setting row names as entrez ID rather than ensembl ID
-# row.names(entrezCountsUnique) <- entrezCountsUnique[,ncol(entrezCountsUnique)]
-# #removing entrez ID from the last column as it is now the row name
-# entrezCountsUnique <- entrezCountsUnique[,1:ncol(entrezCountsUnique)-1]
-
-#removing duplicate WormBase IDs
-
-
 #####Setting DGE list for WCGO
 WC_dge.er <- DGEList(counts=GenewiseCounts)
 
@@ -384,10 +295,12 @@ WC_A_vs_B_IDs <- c("Wormbase.ID", row.names(WC_A_vs_B_df))
 WC_A_vs_C_IDs <- c("Wormbase.ID", row.names(WC_A_vs_C_df))
 WC_B_vs_C_IDs <- c("Wormbase.ID", row.names(WC_B_vs_C_df))
 
+# number of DEGs with p-value <= 0.05, but NOT FDR corrected
 length(WC_A_vs_B_IDs)
 length(WC_A_vs_C_IDs)
 length(WC_B_vs_C_IDs)
 
+# write out gene lists to be read into wormcat
 writeLines(WC_A_vs_B_IDs, con = "WormCat_A_vs_B.csv")
 writeLines(WC_A_vs_C_IDs, con = "WormCat_A_vs_C.csv")
 writeLines(WC_B_vs_C_IDs, con = "WormCat_B_vs_C.csv")
@@ -395,6 +308,7 @@ writeLines(WC_B_vs_C_IDs, con = "WormCat_B_vs_C.csv")
 
 
 ```{r wormcat, echo=FALSE, include=FALSE, results='hide', eval=FALSE}
+# execute WormCat
 worm_cat_fun("./WormCat_A_vs_B.csv", annotation_file ="whole_genome_jul-03-2019.csv",
              input_type = "Wormbase.ID")
 
