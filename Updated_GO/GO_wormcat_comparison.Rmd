@@ -5,7 +5,8 @@ output: html_document
 
 ```{r setup, include=FALSE}
 # sets the working directory for the entire notebook
-knitr::opts_knit$set(root.dir = '/Users/brendanwinnacott/bioinformatics/Bi610_lab/InVivo/wormcat_resources')
+# change to directory where repo is located if necessary
+knitr::opts_knit$set(root.dir = '~/bioinformatics/Bi610_lab/group-projects-invivo-fall-project/Updated_GO/')
 ```
 
 ### Introduction
@@ -356,7 +357,7 @@ input gene. Categories 1, 2, and 3 are provided for each gene, as well as a more
 annotation of the putative gene function.
 ```{r}
 # read in file
-wormcat_mappings <- read.csv('B-vs-C_worm-cat_Oct-23-2020-01_39_15/rgs_and_categories.csv',row.names = 1,header = TRUE)
+wormcat_mappings <- read.csv('B_vs_C_rgs_and_categories.csv',row.names = 1,header = TRUE)
 # remove the genes with 'Unknown' category 1 assignments; not useful for term enrichment analysis or 
 # comparison to GO
 wc_annotations <- subset(wormcat_mappings,Category.1 != 'Unknown')
