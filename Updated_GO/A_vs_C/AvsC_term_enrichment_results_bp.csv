@@ -1,0 +1,6 @@
+"","GO.ID","Term","Annotated","Significant","Expected","Rank in classic","classic","weight","adj_pval_classic","Significant_Genes"
+"1","GO:0045087","innate immune response",278,12,3.03,8,4.7e-05,"4.7e-05",0.00094,"WBGene00000556, WBGene00007867, WBGene00009393, WBGene00009431, WBGene00010123, WBGene00010659, WBGene00010745, WBGene00011979, WBGene00013651, WBGene00015933, WBGene00016769, WBGene00017678"
+"2","GO:0042338","cuticle development involved in collagen...",26,4,0.28,13,0.00017,"0.00017",0.0034,"WBGene00001067, WBGene00004397, WBGene00005016, WBGene00005017"
+"3","GO:0045989","positive regulation of striated muscle c...",5,2,0.05,15,0.00115,"0.00115",0.023,"WBGene00006759, WBGene00006820"
+"4","GO:0015886","heme transport",7,2,0.08,18,0.00239,"0.00239",0.0478,"WBGene00010256, WBGene00019830"
+"11","GO:0098542","defense response to other organism",407,19,4.44,1,6.7e-08,"0.01244",1.34e-06,"WBGene00000556, WBGene00003768, WBGene00007541, WBGene00007867, WBGene00009393, WBGene00009431, WBGene00010123, WBGene00010256, WBGene00010659, WBGene00010745, WBGene00011979, WBGene00013651, WBGene00015052, WBGene00015933, WBGene00016669, WBGene00016769, WBGene00017678, WBGene00018731, WBGene00021581"

@@ -6,7 +6,7 @@ output: html_document
 ```{r setup, include=FALSE}
 # sets the working directory for the entire notebook
 # change to directory where repo is located if necessary
-knitr::opts_knit$set(root.dir = '~/bioinformatics/Bi610_lab/group-projects-invivo-fall-project/Updated_GO/')
+knitr::opts_knit$set(root.dir = '~/bioinformatics/Bi610_lab/InVivo/wormcat_resources/')
 ```
 
 ### Introduction
@@ -83,7 +83,7 @@ file contains the output from edgeR's likelihood ratio test.
 ```{r data input}
 # read in the entire gene list for the analysis, not just the de genes; ideally a file from 
 # a likelihood ratio test which provides test statistics for differential expression
-dge_data <- read.csv('worm_B_vs_C_lrt.csv',sep = ',',header = TRUE,row.names = 1)
+dge_data <- read.csv('worm_A_vs_C_lrt.csv',sep = ',',header = TRUE,row.names = 1)
 head(dge_data)
 ```
 
@@ -340,9 +340,9 @@ results_adjp_mf$Significant_Genes <- as.character(results_adjp_mf$Significant_Ge
 **Write out enrichment results for each GO ontology category to csv**  
 ```{r}
 # write results out to csv file for each ontology
-write.csv(results_adjp_bp,'term_enrichment_results_bp.csv')
-write.csv(results_adjp_cc,'term_enrichment_results_cc.csv')
-write.csv(results_adjp_mf,'term_enrichment_results_mf.csv')
+write.csv(results_adjp_bp,'AvsC_term_enrichment_results_bp.csv')
+write.csv(results_adjp_cc,'AvsC_term_enrichment_results_cc.csv')
+write.csv(results_adjp_mf,'AvsC_term_enrichment_results_mf.csv')
 ```
 
 ***
