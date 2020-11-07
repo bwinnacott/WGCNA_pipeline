@@ -1,0 +1,443 @@
+---
+title: "GO vs Wormcat"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+# sets the working directory for the entire notebook
+knitr::opts_knit$set(root.dir = '/Users/brendanwinnacott/bioinformatics/Bi610_lab/InVivo/wormcat_resources')
+```
+
+### Introduction
+
+Presented below is a set of R commands for generating outputs of term enrichment analysis 
+using topGO and comparing to Wormcat analysis. This GO analysis, using 'topGO', provides more 
+flexibility than the approach using 'goana'. More options for test statistics and algorithms 
+are provided for running enrichment tests, and more functionality associated with the 
+topGO class object allows for a comprehensive analysis. 
+
+**Input data for GO analysis**
+
+*Option 1:*
+
+-list of all genes with statistics from DGE analysis (p-value, logFC, adjusted p-value, etc.); 
+this input option assumes that DGE analysis is performed prior to running this file  
+-example dataset types include a likelihood ratio test output (i.e. from edgeR), a topTable 
+output from limma/voom analysis, or any other gene list with associated statistics that may 
+help in differentiating genes of interest from the entire gene list
+
+*Option 2:*
+
+-list of gene identifiers split up into two separate text files (without statistics):
+
+* one that contains the entire gene list in the analysis (gene universe)
+* one that contains a gene set of interest (predetermined gene list based on statistic(s) 
+of interest; i.e., p-value from differential expression analysis, or identified hub genes), 
+or any other qualitative measure)
+
+*For the purpose of demonstration:*
+
+* option 1 input data will be used for this analysis (group B vs group C differential expression 
+analysis results in the form of an edgeR likelihood ratio test output)
+* gene IDs are from Wormbase (i.e., "WBGene00000023"); *additional gene IDs can be provided in the* 
+*test dataset if desired, such as entrez IDs or ensembl IDs, but wormbase is more comprehensive for* 
+*this dataset*
+
+**Input data for Wormcat analysis**
+
+-files output from running "worm_cat_fun" in 'Wormcat' package (see 'explore_wormcat.Rmd' for 
+details):
+
+* category 1 term enrichment  
+* category 2 term enrichment  
+* category 3 term enrichment  
+* regulated gene set and category assignments  
+
+***
+
+### topGO Analysis
+
+**Read in appropriate packages for both analyses**  
+```{r, message=FALSE}
+if (!requireNamespace("BiocManager", quietly = TRUE))
+  install.packages("BiocManager")
+
+if(!require(biomaRt)) BiocManager::install("biomaRt")
+if(!require(topGO)) BiocManager::install("topGO")
+if(!require(org.Ce.eg.db)) BiocManager::install("org.Ce.eg.db")
+if(!require(GO.db)) BiocManager::install("GO.db")
+
+library(biomaRt)
+library(org.Ce.eg.db)
+library(GO.db)
+library(topGO)
+library(VennDiagram)
+library(wormcat)
+```
+
+**Read in file for GO analysis**  
+If utilizing the second option (see *Introduction*) for input data types, read in the two files 
+containing the gene list for the analysis and the pre-determined set of interesting genes. The below 
+file contains the output from edgeR's likelihood ratio test.
+```{r data input}
+# read in the entire gene list for the analysis, not just the de genes; ideally a file from 
+# a likelihood ratio test which provides test statistics for differential expression
+dge_data <- read.csv('worm_B_vs_C_lrt.csv',sep = ',',header = TRUE,row.names = 1)
+head(dge_data)
+```
+
+**Assign gene list (universe) and gene set (genes of interest) to variables**  
+This is necessary if using the first option for input data, which is the case for this analysis. 
+Use this step to define the genes of interest based on whatever metric(s) is desired. If using the 
+second option, gene identifiers would already be loaded in during the previous step for each category 
+(gene list and gene set). 
+```{r define gene lists}
+# isolate all wormbase (or other) gene IDs from table
+gene_list <- rownames(dge_data)
+# subset the 'dge_data' dataframe by genes of interest, based on a single statistic 
+# or a combination of statistics (i.e., logFC >= 1 and P-value <= 0.05); capture the 
+# gene IDs for this set using 'rownames'; these are the genes defined as being 
+# differentially expressed
+gene_set <- rownames(subset(dge_data, abs(logFC) >= 1 & PValue <= 0.05))
+```
+
+**Map GO terms to genes in the dataset**  
+If using Wormbase gene IDs, the following two chunks of code are required, as the topGO class object 
+does not support automated GO mappings to this identifier. This can be run for other ID types, such as 
+entrez IDs or ensembl IDs (by changing the appropriate arguments), but these alternative ID mappings 
+can be done when instantiating the topGO class object (see 'topGO object' code chunk).
+```{r map terms to genes}
+# generate gene to GO term mappings using biomaRt package
+db= useMart('ENSEMBL_MART_ENSEMBL',dataset='celegans_gene_ensembl', host="www.ensembl.org")
+go_ids= getBM(attributes=c('go_id', 'wormbase_gene', 'namespace_1003'), filters='wormbase_gene', values=gene_list, mart=db)
+```
+
+**Modify mapping output from 'getBM' so it's compatible with topGO object**  
+```{r restructure mappings}
+# modify annotation output for topGO object; gene to GO ID mapping object
+gene_to_GO <- unstack(go_ids[,c(1,2)])
+# check out the gene to GO term mappings
+head(gene_to_GO)
+```
+
+**Get total number of interesting genes with annotations**  
+For comparison of the total number of interesting genes (DEGs in this case) annotated to GO 
+terms with that of those annotated to Wormcat terms, unique genes with mappings are counted. 
+```{r annotation count}
+# pull out the total number of genes of interest that have a GO annotation; first subset 
+# by gene IDs with category annotations
+with_annotations <- subset(go_ids,go_id != '')
+# only consider one annotation instance for each gene
+uniq_annots <- unique(with_annotations$wormbase_gene)
+# identify the total number of annotated genes that are found in our gene set of interest
+gene_set_annot <- intersect(gene_set,uniq_annots)
+paste('Total number of differentially expressed genes w/GO annotations:',length(gene_set_annot))
+```
+
+**Generate named vector for use with topGO class object instantiation**  
+This creates a vector with gene IDs as the names for each element (Wormbase IDs in this 
+case). This step is necessary for providing all genes as one object to be passed as an 
+argument for the topGO class object. In this example scenario, genes of interest are 
+marked with 1 while other genes in the analysis are marked with 0. If using a numeric 
+vector, with a single statistic (p-value for example), a function can be applied to 
+differentiate the interesting genes from the non-interesing genes in the topGO object 
+call. Such an example is not provided herein. 
+```{r named vector}
+# obtain named vector representing all genes in analysis, with a factor level of '1' 
+# indicating gene of interest as defined in 'de_gene_set' and 0 if otherwise; this is 
+# required for the topGO class object instantiation
+all_genes <- factor(as.integer(gene_list %in% gene_set))
+# assign wormbase gene IDs for all genes to factor names
+names(all_genes) <- gene_list
+# check out the structure of the 'all_genes' object
+str(all_genes)
+```
+
+**Create topGO class objects for each of the three GO ontologies**  
+These class objects are used for term enrichment analysis. The three ontologies 
+associated with GO are biological process (BP), cellular component (CC), and molecular 
+function (MF).
+```{r topGO object, message=FALSE}
+# generate topGO object for analysis of the biological process (BP) ontology; using annotation 
+# function 'annFUN.gene2GO' due to mappings being provided; if mappings were not provided by user, 
+# see code commented out directly below this assignment
+geneID2GO_bp <- new("topGOdata",         # specify topGO class
+                 ontology="BP",          # choose ontology, options are "BP", "CC", and "MF"
+                 allGenes = all_genes,   # specifies named vector with all genes in input data set
+                 annot = annFUN.gene2GO, # function to perform gene to GO term mappings
+                 gene2GO = gene_to_GO)   # mappings provided by user (see code chunks 4-5)
+                 # use 'nodeSize=int' as an argument to set the minimum number of genes a GO term 
+                 # must have annotated to it for it to be included in the enrichment analysis; these 
+                 # terms with low numbers of annotated genes can be falsely detected as significantly enriched
+
+# if gene IDs such as 'entrez' or 'ensembl' are provided in the input data sets, mappings 
+# from 'biomaRt' functionality (see lines 112-113) are not required and can be specified in 
+# the topGO class object call (essentially line 112-121 are not necessary):
+
+# geneID2GO <- new("topGOdata", ontology="BP", allGenes = all_genes, annotationFun = annFUN.org, mapping = 'org.Ce.eg.db', ID = 'entrez')
+
+# check out the details of the new topGO class object
+geneID2GO_bp
+
+# get the topGO class object with annotations associated with 'CC' category
+geneID2GO_cc <- new("topGOdata",           
+                 ontology="CC",          # choose 'CC' for ontology
+                 allGenes = all_genes,   
+                 annot = annFUN.gene2GO,
+                 gene2GO = gene_to_GO)
+                 # use 'nodeSize=int' as an argument to set the minimum number of genes a GO term 
+                 # must have annotated to it for it to be included in the enrichment analysis
+
+# check out the details of the new topGO class object (with the cellular compartment category)
+geneID2GO_cc
+
+# now obtain the topGO class object with annotations associated with 'MF' category
+geneID2GO_mf <- new("topGOdata",           
+                 ontology="MF",          # choose 'MF' for ontology
+                 allGenes = all_genes,   
+                 annot = annFUN.gene2GO,
+                 gene2GO = gene_to_GO)
+                 # use 'nodeSize=int' as an argument to set the minimum number of genes a GO term 
+                 # must have annotated to it for it to be included in the enrichment analysis
+
+# check out the details of the new topGO class object (with the molecular function category)
+geneID2GO_mf
+```
+
+Note the dropoff from available genes to feasible genes for the ontologies. For example, in the 'BP' ontology, 
+46882 available genes drops to 10663 feasible genes for the analysis. 1225 significant genes drop to 470 feasible 
+significant genes available for term enrichment. This is due to an incomplete set of GO annotations for a large 
+portion of the genes found in the input file. However, this is an improvement from the previous analysis using 
+'goana', which only accepts entrez gene IDs. For the same dataset and ontology (i.e., 'BP'), the feasible genes 
+are set at 9221, with only 284 of those considered significant based on the p-value and logFC thresholds defined 
+above. 
+
+**Perform enrichment tests for each ontology category**  
+Classic and weighted fisher tests are used to calculate enrichment of interesting 
+genes in GO pathways. The difference between the two algorithms is that one considers 
+the GO topology (weighted), while the other does not. In other words, p-values computed 
+for a GO term are conditioned on the neighboring terms. Together, these tests provide 
+additional information for interpretation. 
+```{r, message=FALSE}
+# perform enrichment tests for the BP ontology
+# classic fisher test for over representation enrichment
+classic_fisher_result_bp <- runTest(geneID2GO_bp, algorithm = 'classic', statistic = 'fisher')
+# fisher test for enrichment using the weight01 algorithm, which takes into account the GO hierarchy
+weight_fisher_result_bp <- runTest(geneID2GO_bp, algorithm = 'weight01', statistic = 'fisher')
+
+# perform enrichment tests for the CC ontology
+# classic fisher test for over representation enrichment
+classic_fisher_result_cc <- runTest(geneID2GO_cc, algorithm = 'classic', statistic = 'fisher')
+# fisher test for enrichment using the weight01 algorithm, which takes into account the GO hierarchy
+weight_fisher_result_cc <- runTest(geneID2GO_cc, algorithm = 'weight01', statistic = 'fisher') 
+
+# perform enrichment tests for the MF ontology
+# classic fisher test for over representation enrichment
+classic_fisher_result_mf <- runTest(geneID2GO_mf, algorithm = 'classic', statistic = 'fisher')
+# fisher test for enrichment using the weight01 algorithm, which takes into account the GO hierarchy
+weight_fisher_result_mf <- runTest(geneID2GO_mf, algorithm = 'weight01', statistic = 'fisher') 
+```
+
+**Create summary tables for the enrichment test results**  
+```{r}
+# generate a summary table of the enrichment results for 'BP' ontology; store the top 20 results based on the weighted test
+enrich_results_bp <- GenTable(geneID2GO_bp, classic = classic_fisher_result_bp, weight = weight_fisher_result_bp, orderBy = 'weight', ranksOf = 'classic', topNodes = 20)  # if all terms are desired in the table, pass 
+                                               # length(genesInTerm(geneID2GO)) to 'topNodes'
+# display the first few terms
+head(enrich_results_bp)
+
+# generate a summary table of the enrichment results for 'CC' ontology; store the top 20 results based on the weighted test
+enrich_results_cc <- GenTable(geneID2GO_cc, classic = classic_fisher_result_cc, weight = weight_fisher_result_cc, orderBy = 'weight', ranksOf = 'classic', topNodes = 20)  # if all terms are desired in the table, pass 
+                                               # length(genesInTerm(geneID2GO)) to 'topNodes'
+# display the first few terms
+head(enrich_results_cc)
+
+# generate a summary table of the enrichment results for 'MF' ontology; store the top 20 results based on the weighted test
+enrich_results_mf <- GenTable(geneID2GO_mf, classic = classic_fisher_result_mf, weight = weight_fisher_result_mf, orderBy = 'weight', ranksOf = 'classic', topNodes = 20)  # if all terms are desired in the table, pass 
+                                               # length(genesInTerm(geneID2GO)) to 'topNodes'
+# display the first few terms
+head(enrich_results_mf)
+```
+
+**Add FDR correct p-value column to each results table**  
+The adjusted statistic is computed from the classic p-values due to multiple testing correction 
+for the weighted algorithm being a bit less robust/necessary (non-independent testing). These 
+p-values are considered corrected for the purposes of this analysis. 
+```{r, warning=FALSE}
+# produce a column containing the bonferroni corrected weighted values (FDR corrected) for each of the above tables
+# for some reason the p-values are reported as string, not numeric
+enrich_results_bp$classic <- as.numeric(enrich_results_bp$classic)
+enrich_results_cc$classic <- as.numeric(enrich_results_cc$classic)
+enrich_results_mf$classic <- as.numeric(enrich_results_mf$classic)
+# add column with adjusted p-values (FDR corrected) to each table
+enrich_results_bp$adj_pval_classic <- p.adjust(enrich_results_bp$classic,method = 'bonferroni',n = nrow(enrich_results_bp))
+enrich_results_cc$adj_pval_classic <- p.adjust(enrich_results_cc$classic,method = 'bonferroni',n = nrow(enrich_results_cc))
+enrich_results_mf$adj_pval_classic <- p.adjust(enrich_results_mf$classic,method = 'bonferroni',n = nrow(enrich_results_mf))
+```
+
+**Select enriched terms with a FDR corrected p-value below 0.05**  
+```{r}
+# for each ontology results table, get all terms that are enriched at an adjusted p-value threshold (i.e., 0.05)
+results_adjp_bp <- subset(enrich_results_bp,adj_pval_classic <= 0.05)
+results_adjp_cc <- subset(enrich_results_cc,adj_pval_classic <= 0.05)
+results_adjp_mf <- subset(enrich_results_mf,adj_pval_classic <= 0.05)
+# show the first few lines of the updated results tables
+head(results_adjp_bp)
+head(results_adjp_cc)
+head(results_adjp_mf)
+```
+
+**Get all genes and significant genes associated with statistically enriched terms**  
+```{r}
+# get all genes that are associated with an enriched term; perform for each ontology
+GO_genes_bp <- genesInTerm(geneID2GO_bp)
+GO_genes_cc <- genesInTerm(geneID2GO_cc)
+GO_genes_mf <- genesInTerm(geneID2GO_mf)
+# get significant genes that are associated with a GO term; perform for each ontology
+sig_genes_bp <- sigGenes(geneID2GO_bp)
+sig_genes_cc <- sigGenes(geneID2GO_cc)
+sig_genes_mf <- sigGenes(geneID2GO_mf)
+```
+
+**Add the significant gene IDs to each results table as a column**  
+```{r}
+# add list of significant genes associated with significantly enriched GO terms to each table above as separate column
+results_adjp_bp$Significant_Genes <- sapply(results_adjp_bp$GO.ID, function(x){
+  genes <- GO_genes_bp[x][[1]]
+  genes[genes %in% sig_genes_bp]
+})
+results_adjp_cc$Significant_Genes <- sapply(results_adjp_cc$GO.ID, function(x){
+  genes <- GO_genes_cc[x][[1]]
+  genes[genes %in% sig_genes_cc]
+})
+results_adjp_mf$Significant_Genes <- sapply(results_adjp_mf$GO.ID, function(x){
+  genes <- GO_genes_mf[x][[1]]
+  genes[genes %in% sig_genes_mf]
+})
+```
+
+**Reformat significant gene IDs column so tables can be written out as csv**  
+The gene IDs are added as a comma separated list, for use in further analyses if desired.
+```{r}
+# reformat the data in the significant gene list column just created; do so for each ontology's results table
+for (i in 1:length(results_adjp_bp$Significant_Genes)) {
+  results_adjp_bp$Significant_Genes[[i]] <- paste(unlist(results_adjp_bp$Significant_Genes[[i]]),sep = '',collapse = ', ')
+}
+for (i in 1:length(results_adjp_cc$Significant_Genes)) {
+  results_adjp_cc$Significant_Genes[[i]] <- paste(unlist(results_adjp_cc$Significant_Genes[[i]]),sep = '',collapse = ', ')
+}
+for (i in 1:length(results_adjp_mf$Significant_Genes)) {
+  results_adjp_mf$Significant_Genes[[i]] <- paste(unlist(results_adjp_mf$Significant_Genes[[i]]),sep = '',collapse = ', ')
+}
+
+# change data type from list to character so results can be written out to file
+results_adjp_bp$Significant_Genes <- as.character(results_adjp_bp$Significant_Genes)
+results_adjp_cc$Significant_Genes <- as.character(results_adjp_cc$Significant_Genes)
+results_adjp_mf$Significant_Genes <- as.character(results_adjp_mf$Significant_Genes)
+```
+
+**Write out enrichment results for each GO ontology category to csv**  
+```{r}
+# write results out to csv file for each ontology
+write.csv(results_adjp_bp,'term_enrichment_results_bp.csv')
+write.csv(results_adjp_cc,'term_enrichment_results_cc.csv')
+write.csv(results_adjp_mf,'term_enrichment_results_mf.csv')
+```
+
+***
+
+### Wormcat Analysis
+
+*Incorporate Wormcat analysis here???*
+
+**Read in the category mapping to genes file from Wormcat output**  
+This is the comprehensive file containing the mapping of category information to each 
+input gene. Categories 1, 2, and 3 are provided for each gene, as well as a more detailed 
+annotation of the putative gene function.
+```{r}
+# read in file
+wormcat_mappings <- read.csv('B-vs-C_worm-cat_Oct-23-2020-01_39_15/rgs_and_categories.csv',row.names = 1,header = TRUE)
+# remove the genes with 'Unknown' category 1 assignments; not useful for term enrichment analysis or 
+# comparison to GO
+wc_annotations <- subset(wormcat_mappings,Category.1 != 'Unknown')
+# get the total genes annotated to useful category terms
+paste('Total number of differentially expressed genes w/Wormcat category annotations:',length(wc_annotations$Wormbase.ID))
+```
+
+**Generate a venn diagram**  
+This venn shows the relationship between interesting genes annotated by each of GO and 
+Wormcat. This diagram pulls from a variable generated in code chunk 'annotation count'.
+```{r}
+venn <- venn.diagram(
+  x = list(gene_set_annot, wc_annotations$Wormbase.ID),
+  category.names = c("GO" , "Wormcat"),
+  filename = NULL,
+  lwd=2,
+  fill=c('green','red'),
+  cex=1,
+  fontface='bold',
+  fontfamily='sans',
+  cat.cex=1.6,
+  cat.pos = c(220, 145),
+  cat.fontface='bold',
+  cat.fontfamily = "sans"
+)
+grid.newpage()
+grid.draw(venn)
+```
+
+Overall, the differences observed in the Venn Diagram above are a result of the removal 
+of any "Unknown" Wormcat assignments from category 1. These results demonstrate the usefulness 
+of utilizing both GO and Wormcat for term enrichment analysis, as both platforms contain a handful 
+of useful gene ontolgy annotations that are not defined in the other (i.e., 212 extra annotations 
+found in GO that are "Unknown" in Wormcat, and 104 extra annotations found in Wormcat that are 
+absent in GO). Although the genes annotated to "Unknown" categories don't provide useful information 
+for gene ontology enrichment analysis, the refined "automated descriptions" associated with each 
+could be useful pieces of information for downstream analyses where individuals genes (hub genes 
+identified using WGCNA?) are selected for further analysis. 
+
+### Conclusion
+
+With topGO, term enrichment analysis is more flexible in its testing abilities, has extensive 
+functionality to make interpreting enrichment analysis easy, and can still provide some important 
+information that Wormcat lacks (i.e, category annotations for certain genes). Wormcat, on the other 
+hand, provides more specific functional details for genes that lack term annotations through GO methods. 
+These details might prove useful for more fine tuned analyses looking at gene leads putatively associated 
+with a phenotype under a specific treatment. Together, separate topGO and Wormcat analyses might be useful 
+for the reasons previously described. Significantly enriched terms for each system can be compared and 
+help to make more informed decisions, while the detailed Wormcat annotations can be extracted for further 
+analysis (potentially with WGCNA output?)
+
+### Functional Annotation of WGCNA Modules
+
+Maybe this pipeline (in its original or modified form) could be used for functional enrichment 
+analysis of gene modules? Not sure how that would look for the time being, but possible gene 
+lists would be all genes in a given analysis while the interesting genes are the entire gene 
+set within a module. If the gene set within a module is too large for a term enrichment analysis, 
+then maybe the gene set can be parsed down to differentially expressed genes within a module, or 
+hub genes (i.e., genes that drive the significance of the module most).
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
