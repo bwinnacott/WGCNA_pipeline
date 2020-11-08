@@ -109,8 +109,8 @@ entrez IDs or ensembl IDs (by changing the appropriate arguments), but these alt
 can be done when instantiating the topGO class object (see 'topGO object' code chunk).
 ```{r map terms to genes}
 # generate gene to GO term mappings using biomaRt package
-db= useMart('ENSEMBL_MART_ENSEMBL',dataset='celegans_gene_ensembl', host="www.ensembl.org")
-go_ids= getBM(attributes=c('go_id', 'wormbase_gene', 'namespace_1003'), filters='wormbase_gene', values=gene_list, mart=db)
+db <- useMart('ENSEMBL_MART_ENSEMBL',dataset='celegans_gene_ensembl', host="www.ensembl.org")
+go_ids <- getBM(attributes=c('go_id', 'wormbase_gene', 'namespace_1003'), filters='wormbase_gene', values=gene_list, mart=db)
 ```
 
 **Modify mapping output from 'getBM' so it's compatible with topGO object**  
