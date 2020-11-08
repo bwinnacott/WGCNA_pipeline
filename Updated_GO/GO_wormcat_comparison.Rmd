@@ -262,7 +262,7 @@ head(enrich_results_mf)
 
 **Add FDR correct p-value column to each results table**  
 The adjusted statistic is computed from the classic p-values due to multiple testing correction 
-for the weighted algorithm being a bit less robust/necessary (non-independent testing). These 
+for the weighted algorithm being a bit less robust/necessary (non-independent testing). The weighted 
 p-values are considered corrected for the purposes of this analysis. 
 ```{r, warning=FALSE}
 # produce a column containing the bonferroni corrected weighted values (FDR corrected) for each of the above tables
@@ -418,7 +418,9 @@ set within a module. If the gene set within a module is too large for a term enr
 then maybe the gene set can be parsed down to differentially expressed genes within a module, or 
 hub genes (i.e., genes that drive the significance of the module most).
 
+### References
 
+[topGO link](https://bioconductor.org/packages/release/bioc/vignettes/topGO/inst/doc/topGO.pdf)
 
 
 
