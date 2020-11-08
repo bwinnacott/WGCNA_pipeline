@@ -487,8 +487,8 @@ gene_set &lt;- rownames(subset(dge_data, abs(logFC) &gt;= 1 &amp; PValue &lt;= 0
 <p><strong>Map GO terms to genes in the dataset</strong><br />
 If using Wormbase gene IDs, the following two chunks of code are required, as the topGO class object does not support automated GO mappings to this identifier. This can be run for other ID types, such as entrez IDs or ensembl IDs (by changing the appropriate arguments), but these alternative ID mappings can be done when instantiating the topGO class object (see ‘topGO object’ code chunk).</p>
 <pre class="r"><code># generate gene to GO term mappings using biomaRt package
-db= useMart(&#39;ENSEMBL_MART_ENSEMBL&#39;,dataset=&#39;celegans_gene_ensembl&#39;, host=&quot;www.ensembl.org&quot;)
-go_ids= getBM(attributes=c(&#39;go_id&#39;, &#39;wormbase_gene&#39;, &#39;namespace_1003&#39;), filters=&#39;wormbase_gene&#39;, values=gene_list, mart=db)</code></pre>
+db &lt;- useMart(&#39;ENSEMBL_MART_ENSEMBL&#39;,dataset=&#39;celegans_gene_ensembl&#39;, host=&quot;www.ensembl.org&quot;)
+go_ids &lt;- getBM(attributes=c(&#39;go_id&#39;, &#39;wormbase_gene&#39;, &#39;namespace_1003&#39;), filters=&#39;wormbase_gene&#39;, values=gene_list, mart=db)</code></pre>
 <p><strong>Modify mapping output from ‘getBM’ so it’s compatible with topGO object</strong></p>
 <pre class="r"><code># modify annotation output for topGO object; gene to GO ID mapping object
 gene_to_GO &lt;- unstack(go_ids[,c(1,2)])
@@ -732,7 +732,7 @@ head(enrich_results_mf)</code></pre>
 ## 5     3.25              14 4.9e-07 4.9e-07
 ## 6     2.37              15 2.4e-06 2.4e-06</code></pre>
 <p><strong>Add FDR correct p-value column to each results table</strong><br />
-The adjusted statistic is computed from the classic p-values due to multiple testing correction for the weighted algorithm being a bit less robust/necessary (non-independent testing). These p-values are considered corrected for the purposes of this analysis.</p>
+The adjusted statistic is computed from the classic p-values due to multiple testing correction for the weighted algorithm being a bit less robust/necessary (non-independent testing). The weighted p-values are considered corrected for the purposes of this analysis.</p>
 <pre class="r"><code># produce a column containing the bonferroni corrected weighted values (FDR corrected) for each of the above tables
 # for some reason the p-values are reported as string, not numeric
 enrich_results_bp$classic &lt;- as.numeric(enrich_results_bp$classic)
@@ -835,9 +835,9 @@ results_adjp_cc$Significant_Genes &lt;- as.character(results_adjp_cc$Significant
 results_adjp_mf$Significant_Genes &lt;- as.character(results_adjp_mf$Significant_Genes)</code></pre>
 <p><strong>Write out enrichment results for each GO ontology category to csv</strong></p>
 <pre class="r"><code># write results out to csv file for each ontology
-write.csv(results_adjp_bp,&#39;term_enrichment_results_bp.csv&#39;)
-write.csv(results_adjp_cc,&#39;term_enrichment_results_cc.csv&#39;)
-write.csv(results_adjp_mf,&#39;term_enrichment_results_mf.csv&#39;)</code></pre>
+write.csv(results_adjp_bp,&#39;BvsC_term_enrichment_results_bp.csv&#39;)
+write.csv(results_adjp_cc,&#39;BvsC_term_enrichment_results_cc.csv&#39;)
+write.csv(results_adjp_mf,&#39;BvsC_term_enrichment_results_mf.csv&#39;)</code></pre>
 <hr />
 </div>
 <div id="wormcat-analysis" class="section level3">
@@ -881,6 +881,10 @@ grid.draw(venn)</code></pre>
 <div id="functional-annotation-of-wgcna-modules" class="section level3">
 <h3>Functional Annotation of WGCNA Modules</h3>
 <p>Maybe this pipeline (in its original or modified form) could be used for functional enrichment analysis of gene modules? Not sure how that would look for the time being, but possible gene lists would be all genes in a given analysis while the interesting genes are the entire gene set within a module. If the gene set within a module is too large for a term enrichment analysis, then maybe the gene set can be parsed down to differentially expressed genes within a module, or hub genes (i.e., genes that drive the significance of the module most).</p>
+</div>
+<div id="references" class="section level3">
+<h3>References</h3>
+<p><a href="https://bioconductor.org/packages/release/bioc/vignettes/topGO/inst/doc/topGO.pdf">topGO link</a></p>
 </div>
 
 
