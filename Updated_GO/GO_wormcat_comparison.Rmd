@@ -271,9 +271,9 @@ enrich_results_bp$classic <- as.numeric(enrich_results_bp$classic)
 enrich_results_cc$classic <- as.numeric(enrich_results_cc$classic)
 enrich_results_mf$classic <- as.numeric(enrich_results_mf$classic)
 # add column with adjusted p-values (FDR corrected) to each table
-enrich_results_bp$adj_pval_classic <- p.adjust(enrich_results_bp$classic,method = 'bonferroni',n = nrow(enrich_results_bp))
-enrich_results_cc$adj_pval_classic <- p.adjust(enrich_results_cc$classic,method = 'bonferroni',n = nrow(enrich_results_cc))
-enrich_results_mf$adj_pval_classic <- p.adjust(enrich_results_mf$classic,method = 'bonferroni',n = nrow(enrich_results_mf))
+enrich_results_bp$adj_pval_classic <- p.adjust(enrich_results_bp$classic,method = 'fdr',n = nrow(enrich_results_bp))
+enrich_results_cc$adj_pval_classic <- p.adjust(enrich_results_cc$classic,method = 'fdr',n = nrow(enrich_results_cc))
+enrich_results_mf$adj_pval_classic <- p.adjust(enrich_results_mf$classic,method = 'fdr',n = nrow(enrich_results_mf))
 ```
 
 **Select enriched terms with a FDR corrected p-value below 0.05**  
