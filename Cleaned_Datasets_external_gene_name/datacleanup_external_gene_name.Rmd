@@ -17,17 +17,16 @@ library(biomaRt)
 ```
 
 ## Read in Datasets
-
 *adjust file paths as necessary*
-```{r GSE134196, results='hide'}
-GSE.134196 <- read.csv("Selected_GEO_datasets/GSE134196_counts.L4440.Y37A1B_5.csv", row.names = 1)
+```{r GSE134196}
+GSE.134196 <- read.csv("Selected_GEO_datasets/GSE134196_counts.L4440.Y37A1B_5.csv")
 GSE.134196
 ```
 <!-- wormbase_gene -->
 <!-- 46,739 -->
 
 ```{r GSE156037}
-GSE.156037 <- read.csv("Selected_GEO_datasets/GSE156037_raw_counts.csv", row.names = 1)
+GSE.156037 <- read.csv("Selected_GEO_datasets/GSE156037_raw_counts.csv")
 GSE.156037
 ```
 <!-- wormbase_gene -->
@@ -35,9 +34,9 @@ GSE.156037
 
 ```{r GSE41205}
 GSE.41205_N2genes <- read.delim("Selected_GEO_datasets/GSE41205_Paul_2012_MAPK/GSM1010460_N2genes.txt", 
-                                sep = "\t", row.names = 1)
+                                sep = "\t")
 GSE.41205_KU25genes <- read.delim("Selected_GEO_datasets/GSE41205_Paul_2012_MAPK/GSM1010461_KU25genes.txt", 
-                                  sep = "\t", row.names = 1)
+                                  sep = "\t")
 GSE.41205_N2genes
 GSE.41205_KU25genes
 ```
@@ -46,8 +45,7 @@ GSE.41205_KU25genes
 <!-- 8,820 -->
 
 ```{r GSE46257}
-GSE.46257 <- read.csv("Selected_GEO_datasets/GSE46257_Schmeisser_2013_arsenite/GSE46257_ce_Nr35-38_counts_rpkm.csv",
-                      row.names = 1)
+GSE.46257 <- read.csv("Selected_GEO_datasets/GSE46257_Schmeisser_2013_arsenite/GSE46257_ce_Nr35-38_counts_rpkm.csv")
 GSE.46257
 ```
 <!-- external_gene_name -->
@@ -217,36 +215,11 @@ invivo
 celegans_mart <- useMart('ENSEMBL_MART_ENSEMBL', dataset='celegans_gene_ensembl', host="www.ensembl.org")
 ```
 
-```{r conversion tests}
-GSE.134196
-
-GSE.134196_IDs <- getBM(attributes=c('wormbase_gene', 'wormbase_cds'), 
-                filters='wormbase_gene',
-                values=rownames(GSE.134196),
-                mart=celegans_mart)
-GSE.134196_IDs
-length(unique(GSE.134196_IDs$external_gene_name))
-
-### initial number of genes 46,739
-# external_gene_name      46,577    aap-1
-# wormbase_cds            55,330    Y110A7A.10
-# ensembl_transcript_id   61,081    Y110A7A.10.1
-# wikigene_name           46,571    aap-1
-# 
-
-length(unique(GSE.134196_IDs$wormbase_gene))
-# 46571
-# maybe do wormbase cds then cleanup ending a,b,c,d, etc.?
-```
-
 ```{r WB to EGN GSE.134196}
-# check whether IDs in rownames or in a column
-GSE.134196
-
 # get converted IDs
 GSE.134196_IDs <- getBM(attributes=c('wormbase_gene', 'external_gene_name'), 
                 filters='wormbase_gene',
-                values=rownames(GSE.134196),
+                values=GSE.134196$X,
                 mart=celegans_mart)
 
 # check ID conversion
@@ -260,11 +233,9 @@ nrow(GSE.134196_IDs) / nrow(GSE.134196)
 <!-- proportion retained: 0.9964056 -->
 
 ```{r WB to EGN GSE156037}
-GSE.156037
-
 GSE.156037_IDs <- getBM(attributes=c('wormbase_gene', 'external_gene_name'), 
                 filters='wormbase_gene',
-                values=rownames(GSE.156037),
+                values=GSE.156037$rowname,
                 mart=celegans_mart)
 
 GSE.156037_IDs
@@ -276,9 +247,6 @@ nrow(GSE.156037_IDs) / nrow(GSE.156037)
 <!-- proportion retained: 0.9964203 -->
 
 ```{r WB to EGN invivo data}
-# check whether IDs in rownames or a column and check initial gene count
-invivo
-
 invivo_IDs <- getBM(attributes=c('wormbase_gene', 'external_gene_name'), 
                 filters='wormbase_gene',
                 values=invivo$feature,
@@ -294,8 +262,8 @@ nrow(invivo_IDs) / nrow(invivo)
 replace Wormbase gene IDs with the external gene names
 ```{r merge converted IDs}
 # extract rownames or rename ID column
-GSE.134196 <- rownames_to_column(GSE.134196, var = "wormbase_gene")
-GSE.156037 <- rownames_to_column(GSE.156037, var = "wormbase_gene")
+GSE.134196 <- rename(GSE.134196, "wormbase_gene" = X)
+GSE.156037 <- rename(GSE.156037, "wormbase_gene" = rowname)
 invivo <- rename(invivo, "wormbase_gene" = feature)
 
 # make last column the first, remove WB genes
@@ -320,10 +288,10 @@ Select only relevant columns
 **be careful to run this chunk only once, otherwise the row numbers will replace the gene names*
 ```{r column cleanup}
 # GSE46257
-# select only the counts columns, pulled IDs out from rownames
+# select only the counts columns, rename ID column
 GSE.46257 <- GSE.46257 %>%
-  select(ends_with("counts")) %>% 
-  rownames_to_column(var = "external_gene_name")
+  select(X, ends_with("counts")) %>% 
+  rename("external_gene_name" = X)
 
 # GSE63528
 # select only the counts columns, do NOT extract rownames bc will use col_bind to combine
@@ -387,11 +355,11 @@ GSE.54853 <- GSE.54853 %>% rename("external_gene_name" = gene)
 # GSE41205
 # select only counts columns, extract IDs from rownames 
 GSE.41205_N2genes <- GSE.41205_N2genes %>%
-  select(starts_with("Uniq_reads")) %>%
-  rownames_to_column(var = "external_gene_name")
+  select("GeneID", starts_with("Uniq_reads")) %>%
+  rename("external_gene_name" = GeneID)
 GSE.41205_KU25genes <- GSE.41205_KU25genes %>%
-  select(starts_with("Uniq_reads")) %>%
-  rownames_to_column(var = "external_gene_name")
+  select("GeneID", starts_with("Uniq_reads")) %>%
+  rename("external_gene_name" = GeneID)
 ```
 
 check that the first column is external_gene_name and that there are only counts columns
