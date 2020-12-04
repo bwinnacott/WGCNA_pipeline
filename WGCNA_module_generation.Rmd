@@ -1,0 +1,287 @@
+---
+title: "WGCNA"
+output: html_document
+---
+
+```{r setup, include=FALSE, echo=FALSE}
+# set global parameters for the file
+require("knitr")
+opts_knit$set(root.dir = "~/bioinformatics/Bi610_lab/InVivo/WGCNA/Experimental/")
+fig.dim <- 6
+knitr::opts_chunk$set(echo=FALSE,
+                      fig.width=2*fig.dim,
+                      fig.height=fig.dim,
+                      fig.align='center')
+```
+
+Load required packages for analysis.
+```{r, message=FALSE}
+if (!requireNamespace("BiocManager", quietly = TRUE))
+  install.packages("BiocManager")
+if(!require(flashClust)) BiocManager::install("flashClust")
+if(!require(WGCNA)) BiocManager::install("WGCNA")
+if(!require(edgeR)) BiocManager::install("edgeR")
+# Load WGCNA and flashClust libraries every time you open R
+library(WGCNA)
+library(flashClust)
+library(edgeR)
+options(stringsAsFactors = FALSE)
+```
+
+Load raw expression data containing genes as rows and samples as columns.
+```{r}
+# read in data and set gene names as rownames
+datExpr = read.csv("raw_GEO_counts.csv")
+row.names(datExpr) = datExpr$X
+datExpr$X = NULL
+# "head" the file to preview it
+head(datExpr)
+```
+
+Normalize the raw gene counts using edgeR's 'calcNormFactors' function. Should we use DESeq's 
+'varianceStabilizingTransformation' function here on the raw counts instead??
+```{r}
+# now normalize the raw count data
+norm.er <- DGEList(counts=datExpr)
+norm.er <- calcNormFactors(norm.er)
+datExpr <- cpm(norm.er)
+# create function for log transformation
+# log_transform <- function(x) {
+#  log2(x+1)
+# }
+# new <- apply(datExpr,MARGIN=2,FUN=log_transform)
+```
+
+Modify the expression data so it is compatible with WGCNA processing (i.e., transpose dataframe 
+so that samples are now rows and genes are columns). Remove genes and samples that have excessive 
+missing entries or zero variance. Parameters for 'goodSamplesGenes' function can be modified to 
+meet the needs of the data.
+```{r, results='hide'}
+datExpr = as.data.frame(t(datExpr))
+rownames(datExpr) <- sub('^X','',rownames(datExpr))
+dim(datExpr)
+
+# Run this to check if there are gene outliers
+gsg = goodSamplesGenes(datExpr, verbose = 3)
+gsg$allOK 
+#If the last statement returns TRUE, all genes have passed the cuts. If not, we remove the offending genes and samples from the data with the following:
+if (!gsg$allOK)
+  {if (sum(!gsg$goodGenes)>0)
+		printFlush(paste("Removing genes:", paste(names(datExpr)[!gsg$goodGenes], collapse= ", ")));
+		if (sum(!gsg$goodSamples)>0)
+			printFlush(paste("Removing samples:", paste(rownames(datExpr)[!gsg$goodSamples], collapse=", ")))
+		datExpr= datExpr[gsg$goodSamples, gsg$goodGenes]
+		}
+```
+
+This section requires a bit of manual examination to ensure that all samples are satisfactory for analysis, i.e., 
+there are no outlier samples present in the dataset.
+```{r}
+sampleTree = hclust(dist(datExpr), method = "average");
+# Plot the sample tree: Open a graphic output window of size 12 by 9 inches
+# The user should change the dimensions if the window is too large or too small.
+sizeGrWindow(12,9)
+par(cex = 0.6);
+par(mar = c(0,4,2,0))
+plot(sampleTree, main = "Sample clustering to detect outliers", sub="", xlab="", cex.lab = 1.5,
+cex.axis = 1.5, cex.main = 2)
+```
+
+Based on the above dendrogram, we can see the sample 'Nr14_Rotenone_5day_rep2' is an outlier. We can 
+remove the sample from the dataset with the following code chunk. Set the 'cutHeight' parameter passed 
+to 'cutreeStatic' function as a value based on the above plot that removes the offending sample (for 
+this example, that value is 100000). **Note:** if no samples are to be removed from the dataset, this 
+code chunk can be skipped. 
+```{r}
+# Determine cluster under the line
+clust = cutreeStatic(sampleTree, cutHeight = 100000, minSize = 10)
+table(clust)
+# clust 1 contains the samples we want to keep.
+keepSamples = (clust==1)
+datExpr = datExpr[keepSamples, ]
+nGenes = ncol(datExpr)
+nSamples = nrow(datExpr)
+```
+
+Import the design matrix containing the condition information, mapping samples to specific conditions 
+or treatments used in this dataset. The sample names from the expression data frame 'datExpr' is mapped 
+onto the new data frame 'datTraits' so even if the names are different in the file being imported, this 
+code chunk will make them match.
+```{r}
+# Create an object called "datTraits" that contains your trait data
+datTraits = read.csv("design_matrix.csv")
+# map the sample names from 'datExpr' to the new trait data frame
+samples <- rownames(datExpr)
+traitrows <- match(samples,datTraits$Sample)
+datTraits <- datTraits[traitrows,]
+# modify the trait data frame so that it matches the expression data
+rownames(datTraits) = datTraits$Sample
+datTraits$Sample = NULL
+head(datTraits)
+# ensure rownames for both the expression dataset and condition (design) dataset are equal
+table(rownames(datTraits)==rownames(datExpr))
+```
+
+```{r}
+# Re-cluster samples
+sampleTree2 = hclust(dist(datExpr), method = "average")
+# Convert traits to a color representation: white means low, red means high, grey means missing entry
+traitColors = numbers2colors(datTraits, signed = FALSE);
+# Plot the sample dendrogram and the colors underneath.
+plotDendroAndColors(sampleTree2, traitColors,
+groupLabels = names(datTraits),
+main = "Sample dendrogram and trait heatmap")
+```
+
+Save the processed and cleaned datasets for use in downstream analysis.
+```{r}
+save(datExpr, datTraits, file = "DataInput_WBconditions.RData")
+```
+
+This code chunk chooses a soft thresholding power for which the pairwise gene correlations are raised 
+to amplify the differences between strong and weak correlations present in the data. This code takes 
+a few minutes to run. 
+```{r}
+powers = c(c(1:10), seq(from =10, to=30, by=1)) #choosing a set of soft-thresholding powers
+sft = pickSoftThreshold(datExpr, powerVector=powers, verbose =5, networkType="signed") #call network topology analysis function
+```
+
+```{r}
+plot(sft$fitIndices[,1], -sign(sft$fitIndices[,3])*sft$fitIndices[,2], xlab= "Soft Threshold (power)", ylab="Scale Free Topology Model Fit, signed R^2", type= "n", main= paste("Scale independence"))
+text(sft$fitIndices[,1], -sign(sft$fitIndices[,3])*sft$fitIndices[,2], labels=powers, col="red")
+abline(h=0.90, col="red")
+```
+
+```{r}
+plot(sft$fitIndices[,1], sft$fitIndices[,5], xlab= "Soft Threshold (power)", ylab="Mean Connectivity", type="n", main = paste("Mean connectivity"))
+text(sft$fitIndices[,1], sft$fitIndices[,5], labels=powers, col="red")
+```
+
+## From this plot, we would choose a power of 9 becuase it's the lowest power for which the scale free topology index reaches 0.90
+
+```{r}
+softPower = 9
+adjacency = adjacency(datExpr, power = softPower, type = "signed") #specify network type
+```
+
+# Construct Networks- USE A SUPERCOMPUTER IRL
+
+```{r}
+#translate the adjacency into topological overlap matrix and calculate the corresponding dissimilarity:
+TOM = TOMsimilarity(adjacency, TOMType="signed") # specify network type
+dissTOM = 1-TOM
+```
+
+# Generate Modules
+
+```{r}
+# Generate a clustered gene tree
+geneTree = flashClust(as.dist(dissTOM), method="average")
+
+plot(geneTree, xlab="", sub="", main= "Gene Clustering on TOM-based dissimilarity", labels= FALSE, hang=0.04)
+
+#This sets the minimum number of genes to cluster into a module
+minModuleSize = 50 
+dynamicMods = cutreeDynamic(dendro= geneTree, distM= dissTOM, deepSplit=2, pamRespectsDendro= FALSE, minClusterSize = minModuleSize)
+
+dynamicColors= labels2colors(dynamicMods)
+MEList= moduleEigengenes(datExpr, colors= dynamicColors,softPower = 9)
+MEs= MEList$eigengenes
+MEDiss= 1-cor(MEs)
+METree= flashClust(as.dist(MEDiss), method= "average")
+
+save(dynamicMods, MEList, MEs, MEDiss, METree, file= "Network_allSamples_signed_WBconditions.RData")
+
+#plots tree showing how the eigengenes cluster together
+plot(METree, main= "Clustering of module eigengenes", xlab= "", sub= "")
+```
+
+```{r}
+#set a threhold for merging modules. In this example we are not merging so MEDissThres=0.0
+MEDissThres = 0.0
+merge = mergeCloseModules(datExpr, dynamicColors, cutHeight= MEDissThres, verbose =3)
+mergedColors = merge$colors
+mergedMEs = merge$newMEs
+
+#plot dendrogram with module colors below it
+plotDendroAndColors(geneTree, cbind(dynamicColors, mergedColors), c("Dynamic Tree Cut", "Merged dynamic"), dendroLabels= FALSE, hang=0.03, addGuide= TRUE, guideHang=0.05)
+
+moduleColors = mergedColors
+colorOrder = c("grey", standardColors(50))
+moduleLabels = match(moduleColors, colorOrder)-1
+MEs = mergedMEs
+```
+
+```{r}
+modgenes <- (moduleColors == 'grey60')
+allIDs <- names(datExpr)
+modgenes <- colnames(datExpr[modgenes])
+write.table(as.data.frame(modgenes),file='grey60_modgenes.txt',row.names = FALSE,col.names = FALSE)
+write.table(as.data.frame(allIDs),file='all_modgenes.txt',row.names = FALSE,col.names = FALSE)
+```
+
+# Correlate traits
+
+```{r}
+
+#Define number of genes and samples
+nGenes = ncol(datExpr)
+nSamples = nrow(datExpr)
+
+#Recalculate MEs with color labels
+MEs0 = moduleEigengenes(datExpr, moduleColors)$eigengenes
+MEs = orderMEs(MEs0)
+moduleTraitCor = cor(MEs, datTraits, use= "p")
+moduleTraitPvalue = corPvalueStudent(moduleTraitCor, nSamples)
+
+#Print correlation heatmap between modules and traits
+textMatrix= paste(signif(moduleTraitCor, 2), "\n(", 
+  					signif(moduleTraitPvalue, 1), ")", sep= "")
+dim(textMatrix)= dim(moduleTraitCor)
+par(mar= c(6, 8.5, 3, 3))
+#display the corelation values with a heatmap plot
+png('module_trait_relationship.png',width = 800,height = 600)
+labeledHeatmap(Matrix= moduleTraitCor, 
+			xLabels= names(datTraits), 
+			yLabels= names(MEs), 
+			ySymbols= names(MEs), 
+			colorLabels= FALSE, 
+			colors= blueWhiteRed(50), 
+			textMatrix= textMatrix, 
+			setStdMargins= FALSE, 
+			cex.text= 0.3, 
+			zlim= c(-1,1), 
+			main= paste("Module-trait relationships"))
+dev.off()
+```
+
+```{r}
+for (i in 1:length(unique(moduleColors))) {
+  print(unique(moduleColors)[i])
+  color <- (moduleColors == unique(moduleColors)[i])
+  genes <- colnames(datExpr[color])
+  print(length(genes))
+}
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
