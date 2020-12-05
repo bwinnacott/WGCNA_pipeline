@@ -1,0 +1,113 @@
+---
+title: "Pre-processing for WGCNA"
+output: html_document
+---
+
+This script is for merging cleaned datasets (see Dataset_Cleanup_Tutorial.Rmd for cleanup information), normalizing counts, and removing rRNA genes.
+
+```{r}
+library(tidyverse)
+```
+
+```{bash}
+pwd
+```
+
+Read in cleaned datasets. Cleaned datasets should all have gene IDs of the same type in the first column and subsequent columns should only contain raw gene counts for each sample.
+```{r read in datasets}
+# datasets
+GSE.55988_transcr <- read.csv("../Cleaned_Datasets_transcript_stableID/GSE55988_cleaned_transcrID.csv")
+GSE.49662_transcr <- read.csv("../Cleaned_Datasets_transcript_stableID/GSE49662_cleaned_transcrID.csv")
+GSE.46051_transcr <- read.csv("../Cleaned_Datasets_transcript_stableID/GSE46051_cleaned_transcrID.csv")
+GSE.54853_transcr <- read.csv("../Cleaned_Datasets_transcript_stableID/GSE54853_cleaned_transcrID.csv")
+invivo_transcr <- read.csv("../Cleaned_Datasets_transcript_stableID/invivo_cleaned_transcrID.csv")
+
+
+# design matrix
+# design <- read.csv('from_Brendan/design_matrix.csv',header = TRUE)
+
+# check that they all look good
+head(GSE.55988_transcr)
+head(GSE.49662_transcr)
+head(GSE.46051_transcr)
+head(GSE.54853_transcr)
+head(invivo_transcr)
+dim(GSE.54853_transcr)
+dim(GSE.49662_transcr)
+dim(GSE.46051_transcr)
+dim(GSE.54853_transcr)
+dim(invivo_transcr)
+```
+
+This chunk merges the datasets. Put the first 2 datasets in the first function, then incorporate next dataset with the previously merged dataset.
+```{r merge}
+# merge all files into one dataframe for WGCNA; the order for merging is determined based on the order of the samples in the design matrix
+merged1 <- merge(GSE.55988_transcr,GSE.49662_transcr,by='transcript_stable_ID',all=TRUE)
+merged2 <- merge(merged1,GSE.46051_transcr,by='transcript_stable_ID',all=TRUE)
+merged3 <- merge(merged2,GSE.54853_transcr,by='transcript_stable_ID',all=TRUE)
+merged_final <- merge(merged3,invivo_transcr,by='transcript_stable_ID',all=TRUE)
+merged_final[is.na(merged_final)] <- 0
+row.names(merged_final) <- merged_final[,1]
+merged_final[,1] <- NULL
+
+# check merge
+merged_final
+```
+
+Remove known rRNA genes
+```{r remove rRNA genes}
+#known rRNA genes listed in the Ensembl database, release 102
+rrna <- c("F31C3.7", "rrn-1.1",
+          "F31C3.8", "rrn-1.2",
+          "F31C3.11", "rrn-2.1",
+          "F31C3.9", "rrn-3.1",
+          "MTCE.7", "MTCE.7",
+          "MTCE.33", "MTCE.33",
+          "ZK218.12", "rrn-4.1",
+          "ZK218.16", "rrn-4.2",
+          "ZK218.17", "rrn-4.3",
+          "ZK218.18", "rrn-4.4",
+          "ZK218.19", "rrn-4.5",
+          "ZK218.20", "rrn-4.6",
+          "Y102A5D.5", "rrn-4.7",
+          "Y102A5D.6", "rrn-4.8",
+          "Y102A5D.7", "rrn-4.9",
+          "Y102A5D.8", "rrn-4.10",
+          "Y102A5D.9", "rrn-4.11",
+          "Y102A5D.10", "rrn-4.12",
+          "Y102A5D.11", "rrn-4.13",
+          "Y102A5D.12", "rrn-4.14",
+          "T27C5.18", "rrn-4.15",
+          "T09B4.23", "rrn-4.16")
+
+rrna_df <- data.frame(rrna)
+rrna_counts <- merge(merged_final, rrna_df, by.x = "row.names", by.y = "rrna")
+
+colnames(rrna_counts)[1] <- "rRNA Gene Name"
+
+print("The raw counts for known rRNA genes are outputted in the following table")
+knitr::kable(rrna_counts, caption = "Raw rRNA Counts")
+
+# remove rRNA counts
+merged_final_no_rRNA <- merged_final[!(rownames(merged_final) %in% rrna),]
+merged_final_no_rRNA
+```
+
+```{r}
+setwd("~/bioinformatics/group-projects-invivo-fall-project/WGCNA/")
+
+writeout <- rownames_to_column(merged_final_no_rRNA, var = "transcript_stable_ID")
+write.csv(writeout, "raw_wormspellGEO_transcript_stable_ID.csv")
+```
+
+## Normalization
+
+## Design Matrix
+
+
+
+
+
+
+
+
