@@ -259,6 +259,7 @@ modules <- row.names(moduleTraitCor[indexes[,1],])
 traits <- colnames(moduleTraitCor[,indexes[,2]])
 ```
 
+Save the module and trait information.
 ```{r}
 # save the module information for downstream analysis
 save(MEs, modules, traits, file = "module_information.RData")
