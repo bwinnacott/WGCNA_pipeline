@@ -28,14 +28,22 @@ for line in in_mart:
     if geneID not in ID_dict:
         ID_dict[geneID] = [transcrID, genename]
 
-
+counter = 0
 for k,v in ID_dict.items():
     split_transcr = re.split("\.", v[0])
     
     if len(split_transcr) == 3:
-        new_transc = split_transcr[0] + "." + split_transcr[1]
-        out_mart.write(k +"\t"+ new_transc +"\t"+ v[1] + "\n")
-    
+        if split_transcr[1].endswith("a".lower()):
+            split_transcr2 = re.findall(r"((\d+)(\w))", split_transcr[1])
+            new_transc = split_transcr[0] + "." + split_transcr2[0][1]
+            counter+=1
+            out_mart.write(k +"\t"+ new_transc +"\t"+ v[1] + "\n")
+            
+            
+        else:
+            new_transc = split_transcr[0] + "." + split_transcr[1]
+            out_mart.write(k +"\t"+ new_transc +"\t"+ v[1] + "\n")
+            
     else:
         out_mart.write(k +"\t"+ v[0] +"\t"+ v[1] + "\n")
     
@@ -43,7 +51,7 @@ for k,v in ID_dict.items():
 in_mart.close()
 out_mart.close()
 
-
+print(counter)
 print("Unique gene IDs:", len(ID_dict))
 
 
