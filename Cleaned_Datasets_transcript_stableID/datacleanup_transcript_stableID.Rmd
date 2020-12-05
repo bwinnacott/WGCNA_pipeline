@@ -1,0 +1,460 @@
+---
+title: "Dataset Cleanup and Conversion to external_gene_name"
+output: html_document
+---
+
+Set working directory
+```{r set directory}
+knitr::opts_knit$set(root.dir = '~/bioinformatics/InVivo/')
+knitr::opts_chunk$set(results = 'hide')
+```
+
+Load libraries
+```{r libraries}
+library(tidyverse)
+library(readxl)
+```
+
+```{bash}
+pwd
+```
+
+## Read in Datasets
+*adjust file paths as necessary*
+```{r GSE134196}
+setwd('~/bioinformatics/InVivo/')
+GSE.134196 <- read.csv("Selected_GEO_datasets/GSE134196_counts.L4440.Y37A1B_5.csv")
+GSE.134196
+```
+<!-- wormbase_gene -->
+<!-- 46,739 -->
+
+```{r GSE156037}
+setwd('~/bioinformatics/InVivo/')
+GSE.156037 <- read.csv("Selected_GEO_datasets/GSE156037_raw_counts.csv")
+GSE.156037
+```
+<!-- wormbase_gene -->
+<!-- 46,093 -->
+
+```{r GSE41205}
+setwd('~/bioinformatics/InVivo/')
+GSE.41205_N2genes <- read.delim("Selected_GEO_datasets/GSE41205_Paul_2012_MAPK/GSM1010460_N2genes.txt", 
+                                sep = "\t")
+GSE.41205_KU25genes <- read.delim("Selected_GEO_datasets/GSE41205_Paul_2012_MAPK/GSM1010461_KU25genes.txt", 
+                                  sep = "\t")
+GSE.41205_N2genes
+GSE.41205_KU25genes
+```
+<!-- external_gene_name -->
+<!-- 9,117 -->
+<!-- 8,820 -->
+
+```{r GSE46257}
+setwd('~/bioinformatics/InVivo/')
+GSE.46257 <- read.csv("Selected_GEO_datasets/GSE46257_Schmeisser_2013_arsenite/GSE46257_ce_Nr35-38_counts_rpkm.csv")
+GSE.46257
+```
+<!-- external_gene_name -->
+<!-- 19,912 genes -->
+
+```{r GSE63528}
+setwd('~/bioinformatics/InVivo/')
+GSE.63528_1 <- read.delim("Selected_GEO_datasets/GSE63528_Rangaraju_2016/GSM1551786_Sample_1_processed_data.txt", 
+                          sep = "\t", row.names = 1)
+GSE.63528_2 <- read.delim("Selected_GEO_datasets/GSE63528_Rangaraju_2016/GSM1551787_Sample_2_processed_data.txt", 
+                          sep = "\t", row.names = 1)
+GSE.63528_3 <- read.delim("Selected_GEO_datasets/GSE63528_Rangaraju_2016/GSM1551788_Sample_3_processed_data.txt", 
+                          sep = "\t", row.names = 1)
+GSE.63528_4 <- read.delim("Selected_GEO_datasets/GSE63528_Rangaraju_2016/GSM1551789_Sample_4_processed_data.txt", 
+                          sep = "\t", row.names = 1)
+GSE.63528_5 <- read.delim("Selected_GEO_datasets/GSE63528_Rangaraju_2016/GSM1551790_Sample_5_processed_data.txt", 
+                          sep = "\t", row.names = 1)
+GSE.63528_6 <- read.delim("Selected_GEO_datasets/GSE63528_Rangaraju_2016/GSM1551791_Sample_6_processed_data.txt", 
+                          sep = "\t", row.names = 1)
+GSE.63528_7 <- read.delim("Selected_GEO_datasets/GSE63528_Rangaraju_2016/GSM1551792_Sample_7_processed_data.txt", 
+                          sep = "\t", row.names = 1)
+GSE.63528_8 <- read.delim("Selected_GEO_datasets/GSE63528_Rangaraju_2016/GSM1551793_Sample_8_processed_data.txt", 
+                          sep = "\t", row.names = 1)
+GSE.63528_9 <- read.delim("Selected_GEO_datasets/GSE63528_Rangaraju_2016/GSM1551794_Sample_9_processed_data.txt", 
+                          sep = "\t", row.names = 1)
+GSE.63528_10 <- read.delim("Selected_GEO_datasets/GSE63528_Rangaraju_2016/GSM1551795_Sample_10_processed_data.txt", 
+                          sep = "\t", row.names = 1)
+GSE.63528_11 <- read.delim("Selected_GEO_datasets/GSE63528_Rangaraju_2016/GSM1551796_Sample_11_processed_data.txt", 
+                          sep = "\t", row.names = 1)
+GSE.63528_12 <- read.delim("Selected_GEO_datasets/GSE63528_Rangaraju_2016/GSM1551797_Sample_12_processed_data.txt", 
+                          sep = "\t", row.names = 1)
+GSE.63528_13 <- read.delim("Selected_GEO_datasets/GSE63528_Rangaraju_2016/GSM1551798_Sample_13_processed_data.txt", 
+                          sep = "\t", row.names = 1)
+GSE.63528_14 <- read.delim("Selected_GEO_datasets/GSE63528_Rangaraju_2016/GSM1551799_Sample_14_processed_data.txt", 
+                          sep = "\t", row.names = 1)
+GSE.63528_15 <- read.delim("Selected_GEO_datasets/GSE63528_Rangaraju_2016/GSM1551800_Sample_15_processed_data.txt", 
+                          sep = "\t", row.names = 1)
+GSE.63528_16 <- read.delim("Selected_GEO_datasets/GSE63528_Rangaraju_2016/GSM1551801_Sample_16_processed_data.txt", 
+                          sep = "\t", row.names = 1)
+GSE.63528_17 <- read.delim("Selected_GEO_datasets/GSE63528_Rangaraju_2016/GSM1551802_Sample_17_processed_data.txt", 
+                          sep = "\t", row.names = 1)
+GSE.63528_18 <- read.delim("Selected_GEO_datasets/GSE63528_Rangaraju_2016/GSM1551803_Sample_18_processed_data.txt", 
+                          sep = "\t", row.names = 1)
+GSE.63528_19 <- read.delim("Selected_GEO_datasets/GSE63528_Rangaraju_2016/GSM1551804_Sample_19_processed_data.txt", 
+                          sep = "\t", row.names = 1)
+GSE.63528_20 <- read.delim("Selected_GEO_datasets/GSE63528_Rangaraju_2016/GSM1551805_Sample_20_processed_data.txt", 
+                          sep = "\t", row.names = 1)
+GSE.63528_21 <- read.delim("Selected_GEO_datasets/GSE63528_Rangaraju_2016/GSM1551806_Sample_21_processed_data.txt", 
+                          sep = "\t", row.names = 1)
+GSE.63528_22 <- read.delim("Selected_GEO_datasets/GSE63528_Rangaraju_2016/GSM1551807_Sample_22_processed_data.txt", 
+                          sep = "\t", row.names = 1)
+GSE.63528_23 <- read.delim("Selected_GEO_datasets/GSE63528_Rangaraju_2016/GSM1551808_Sample_23_processed_data.txt", 
+                          sep = "\t", row.names = 1)
+GSE.63528_24 <- read.delim("Selected_GEO_datasets/GSE63528_Rangaraju_2016/GSM1551809_Sample_24_processed_data.txt", 
+                          sep = "\t", row.names = 1)
+GSE.63528_25 <- read.delim("Selected_GEO_datasets/GSE63528_Rangaraju_2016/GSM1551810_Sample_25_processed_data.txt", 
+                          sep = "\t", row.names = 1)
+GSE.63528_26 <- read.delim("Selected_GEO_datasets/GSE63528_Rangaraju_2016/GSM1551811_Sample_26_processed_data.txt", 
+                          sep = "\t", row.names = 1)
+GSE.63528_27 <- read.delim("Selected_GEO_datasets/GSE63528_Rangaraju_2016/GSM1551812_Sample_27_processed_data.txt", 
+                          sep = "\t", row.names = 1)
+GSE.63528_28 <- read.delim("Selected_GEO_datasets/GSE63528_Rangaraju_2016/GSM1551813_Sample_28_processed_data.txt", 
+                          sep = "\t", row.names = 1)
+GSE.63528_29 <- read.delim("Selected_GEO_datasets/GSE63528_Rangaraju_2016/GSM1551814_Sample_29_processed_data.txt", 
+                          sep = "\t", row.names = 1)
+GSE.63528_30 <- read.delim("Selected_GEO_datasets/GSE63528_Rangaraju_2016/GSM1551815_Sample_30_processed_data.txt", 
+                          sep = "\t", row.names = 1)
+GSE.63528_31 <- read.delim("Selected_GEO_datasets/GSE63528_Rangaraju_2016/GSM1551816_Sample_31_processed_data.txt", 
+                          sep = "\t", row.names = 1)
+GSE.63528_32 <- read.delim("Selected_GEO_datasets/GSE63528_Rangaraju_2016/GSM1551817_Sample_32_processed_data.txt", 
+                          sep = "\t", row.names = 1)
+GSE.63528_33 <- read.delim("Selected_GEO_datasets/GSE63528_Rangaraju_2016/GSM1551818_Sample_33_processed_data.txt", 
+                          sep = "\t", row.names = 1)
+GSE.63528_34 <- read.delim("Selected_GEO_datasets/GSE63528_Rangaraju_2016/GSM1551819_Sample_34_processed_data.txt", 
+                          sep = "\t", row.names = 1)
+GSE.63528_35 <- read.delim("Selected_GEO_datasets/GSE63528_Rangaraju_2016/GSM1551820_Sample_35_processed_data.txt", 
+                          sep = "\t", row.names = 1)
+GSE.63528_36 <- read.delim("Selected_GEO_datasets/GSE63528_Rangaraju_2016/GSM1551821_Sample_36_processed_data.txt", 
+                          sep = "\t", row.names = 1)
+
+GSE.63528_1
+GSE.63528_2
+GSE.63528_3
+GSE.63528_4
+GSE.63528_5
+GSE.63528_6
+GSE.63528_7
+GSE.63528_8
+GSE.63528_9
+GSE.63528_10
+GSE.63528_11
+GSE.63528_12
+GSE.63528_13
+GSE.63528_14
+GSE.63528_15
+GSE.63528_16
+GSE.63528_17
+GSE.63528_18
+GSE.63528_19
+GSE.63528_20
+GSE.63528_21
+GSE.63528_22
+GSE.63528_23
+GSE.63528_24
+GSE.63528_25
+GSE.63528_26
+GSE.63528_27
+GSE.63528_28
+GSE.63528_29
+GSE.63528_30
+GSE.63528_31
+GSE.63528_32
+GSE.63528_33
+GSE.63528_34
+GSE.63528_35
+GSE.63528_36
+```
+<!-- external_gene_name -->
+<!-- 20,537 genes -->
+
+<!-- WormSPELL sets -->
+```{r GSE49662}
+setwd('~/bioinformatics/InVivo/')
+GSE.49662 <- read.delim("Selected_GEO_datasets/WormSPELL/GSE49662_ce_Nr101-109_counts.txt", 
+                          sep = "\t")
+GSE.49662
+```
+<!-- external_gene_name -->
+<!-- 45,461 -->
+
+
+```{r GSE55988}
+setwd('~/bioinformatics/InVivo/')
+GSE.55988 <- read.delim("Selected_GEO_datasets/WormSPELL/GSE55988_htseq-count-table.txt", 
+                          sep = "\t")
+GSE.55988  
+```
+<!-- external_gene_name -->
+<!-- 45,836 -->
+
+```{r GSE46051 xls}
+setwd('~/bioinformatics/InVivo/')
+GSE.46051 <- read_xls("Selected_GEO_datasets/WormSPELL/GSE46051_ce_22samples_DMSO_Rotenone_counts_and_RPKM.xls")
+
+GSE.46051
+```
+<!-- external_gene_name -->
+<!-- 45,461 -->
+
+
+```{r GSE54853 xls}
+setwd('~/bioinformatics/InVivo/')
+GSE.54853 <- read_xls("Selected_GEO_datasets/WormSPELL/GSE54853_Nr01-12_25-36_counts_ce_mm.xls")
+GSE.54853
+```
+<!-- external_gene_name -->
+<!-- 19,911 -->
+
+<!-- InVivo data -->
+```{r invivo data}
+setwd('~/bioinformatics/InVivo/')
+invivo <- read.delim("../group-projects-invivo-fall-project/BGMP_IVB_2020_dataset/merged_counts.tsv",
+                     sep = "\t")
+# remove last 5 lines that don't contain genecounts
+invivo <- invivo[1:(nrow(invivo)-5),]
+```
+<!-- wormbase_gene -->
+<!-- 46,909 -->
+
+
+
+## Cleanup for WGCNA
+Select only relevant columns
+**be careful to run this chunk only once, otherwise the row numbers will replace the gene names*
+
+```{r}
+ID_df <- read.delim("~/bioinformatics/group-projects-invivo-fall-project/Cleaned_Datasets_transcript_stableID/celegans_cleaned_mart_ensembl.102.tsv", sep = "\t")
+ID_df
+```
+
+
+
+```{r GSE46257 cleanup}
+GSE.46257_converted <- merge(GSE.46257, ID_df, by.x = "X", by.y = "Gene.name", all.x = FALSE, all.y = FALSE)
+GSE.46257_converted <- GSE.46257_converted %>%
+  select(Transcript.stable.ID, ends_with("counts")) %>%
+  rename("transcript_stable_ID" = Transcript.stable.ID)
+GSE.46257_converted
+
+nrow(GSE.46257)
+nrow(GSE.46257_converted)
+nrow(GSE.46257_converted)/nrow(GSE.46257)
+```
+
+```{r GSE63528 cleanup}
+# select only the counts columns
+GSE.63528_1 <- GSE.63528_1 %>% select(starts_with("Count"))
+GSE.63528_2 <- GSE.63528_2 %>% select(starts_with("Count"))
+GSE.63528_3 <- GSE.63528_3 %>% select(starts_with("Count"))
+GSE.63528_4 <- GSE.63528_4 %>% select(starts_with("Count"))
+GSE.63528_5 <- GSE.63528_5 %>% select(starts_with("Count"))
+GSE.63528_6 <- GSE.63528_6 %>% select(starts_with("Count"))
+GSE.63528_7 <- GSE.63528_7 %>% select(starts_with("Count"))
+GSE.63528_8 <- GSE.63528_8 %>% select(starts_with("Count"))
+GSE.63528_9 <- GSE.63528_9 %>% select(starts_with("Count"))
+GSE.63528_10 <- GSE.63528_10 %>% select(starts_with("Count"))
+GSE.63528_11 <- GSE.63528_11 %>% select(starts_with("Count"))
+GSE.63528_12 <- GSE.63528_12 %>% select(starts_with("Count"))
+GSE.63528_13 <- GSE.63528_13 %>% select(starts_with("Count"))
+GSE.63528_14 <- GSE.63528_14 %>% select(starts_with("Count"))
+GSE.63528_15 <- GSE.63528_15 %>% select(starts_with("Count"))
+GSE.63528_16 <- GSE.63528_16 %>% select(starts_with("Count"))
+GSE.63528_17 <- GSE.63528_17 %>% select(starts_with("Count"))
+GSE.63528_18 <- GSE.63528_18 %>% select(starts_with("Count"))
+GSE.63528_19 <- GSE.63528_19 %>% select(starts_with("Count"))
+GSE.63528_20 <- GSE.63528_20 %>% select(starts_with("Count"))
+GSE.63528_21 <- GSE.63528_21 %>% select(starts_with("Count"))
+GSE.63528_22 <- GSE.63528_22 %>% select(starts_with("Count"))
+GSE.63528_23 <- GSE.63528_23 %>% select(starts_with("Count"))
+GSE.63528_24 <- GSE.63528_24 %>% select(starts_with("Count"))
+GSE.63528_25 <- GSE.63528_25 %>% select(starts_with("Count"))
+GSE.63528_26 <- GSE.63528_26 %>% select(starts_with("Count"))
+GSE.63528_27 <- GSE.63528_27 %>% select(starts_with("Count"))
+GSE.63528_28 <- GSE.63528_28 %>% select(starts_with("Count"))
+GSE.63528_29 <- GSE.63528_29 %>% select(starts_with("Count"))
+GSE.63528_30 <- GSE.63528_30 %>% select(starts_with("Count"))
+GSE.63528_31 <- GSE.63528_31 %>% select(starts_with("Count"))
+GSE.63528_32 <- GSE.63528_32 %>% select(starts_with("Count"))
+GSE.63528_33 <- GSE.63528_33 %>% select(starts_with("Count"))
+GSE.63528_34 <- GSE.63528_34 %>% select(starts_with("Count"))
+GSE.63528_35 <- GSE.63528_35 %>% select(starts_with("Count"))
+GSE.63528_36 <- GSE.63528_36 %>% select(starts_with("Count"))
+
+# group all samples into a list
+GSE.63528_list <- c(
+  GSE.63528_1, GSE.63528_2, GSE.63528_3, GSE.63528_4, GSE.63528_5,
+  GSE.63528_6, GSE.63528_7, GSE.63528_8, GSE.63528_9, GSE.63528_10,
+  GSE.63528_11, GSE.63528_12, GSE.63528_13, GSE.63528_14, GSE.63528_15,
+  GSE.63528_16, GSE.63528_17, GSE.63528_18, GSE.63528_19, GSE.63528_20,
+  GSE.63528_21, GSE.63528_22, GSE.63528_23, GSE.63528_24, GSE.63528_25,
+  GSE.63528_26, GSE.63528_27, GSE.63528_28, GSE.63528_29, GSE.63528_30,
+  GSE.63528_31, GSE.63528_32, GSE.63528_33, GSE.63528_34, GSE.63528_35,
+  GSE.63528_36
+)
+
+
+# bind columns and convert tibble to df, re-add geneID
+GSE.63528_merged <- as.data.frame(bind_cols(GSE.63528_list))
+rownames(GSE.63528_merged) <- rownames(GSE.63528_1)
+GSE.63528_merged <- rownames_to_column(GSE.63528_merged, var = "transcript_stable_ID")
+GSE.63528_merged
+```
+
+```{r GSE49662 cleanup}
+# drop extra gene ID column and rename kept one to transcript_stable_ID
+GSE.49662 <- GSE.49662 %>%
+  select("ensembl_gene_id", starts_with("Nr"))  %>%
+  rename("transcript_stable_ID" = ensembl_gene_id)
+GSE.49662
+```
+
+```{r GSE55988 cleanup}
+# rename gene ID column
+GSE.55988 <- GSE.55988 %>% rename("transcript_stable_ID" = GeneID)
+GSE.55988
+```
+
+```{r GSE46051 cleanup}
+# drop extra gene ID columns and rename kept one
+GSE.46051 <- GSE.46051 %>% 
+  select("gene", starts_with("JA")) %>% 
+  rename("transcript_stable_ID" = gene)
+GSE.46051
+```
+
+```{r GSE54853 cleanup}
+# rename gene ID column
+GSE.54853_converted <- merge(GSE.54853, ID_df, by.x = "gene", by.y = "Gene.name", all.x = FALSE, all.y = FALSE)
+GSE.54853_converted <- GSE.54853_converted %>%
+  select(Transcript.stable.ID, starts_with("Nr")) %>%
+  rename("transcript_stable_ID" = Transcript.stable.ID)
+GSE.54853_converted
+
+nrow(GSE.54853)
+nrow(GSE.54853_converted)
+nrow(GSE.54853_converted)/nrow(GSE.54853)
+```
+
+```{r GSE41205 cleanup}
+# GSE41205
+# select only counts columns, rename gene ID column 
+GSE.41205_N2genes <- GSE.41205_N2genes %>%
+  select("GeneID", starts_with("Uniq_reads")) %>%
+  rename("transcript_stable_ID" = GeneID)
+GSE.41205_KU25genes <- GSE.41205_KU25genes %>%
+  select("GeneID", starts_with("Uniq_reads")) %>%
+  rename("transcript_stable_ID" = GeneID)
+
+# need to use merge function because different number of rows
+GSE.41205_N2genes
+GSE.41205_KU25genes
+GSE.41205_merged <- merge(GSE.41205_N2genes, GSE.41205_KU25genes, by="transcript_stable_ID")
+GSE.41205_merged
+```
+
+
+## Convert Wormbase gene IDs to external_gene_name
+Convert IDs
+```{r geneID to transcriptID GSE.134196}
+GSE.134196_converted <- merge(GSE.134196, ID_df, by.x = "X", by.y = "Gene.stable.ID", all.x = FALSE, all.y = FALSE)
+GSE.134196_converted <- GSE.134196_converted %>%
+  select(Transcript.stable.ID, starts_with("L"), starts_with("Y")) %>%
+  rename("transcript_stable_ID" = Transcript.stable.ID)
+
+GSE.134196_converted
+
+# check retention
+nrow(GSE.134196)
+nrow(GSE.134196_converted)
+nrow(GSE.134196_converted) / nrow(GSE.134196)
+```
+<!-- original number of genes: 46,739 -->
+<!-- number of genes after conversion to external gene name: 46,571 -->
+<!-- proportion retained: 0.9964056 -->
+
+```{r geneID to transcriptID GSE156037}
+GSE.156037_converted <- merge(GSE.156037, ID_df, by.x = "rowname", by.y = "Gene.stable.ID", all.x = FALSE, all.y = FALSE)
+GSE.156037_converted <- GSE.156037_converted %>%
+  select(Transcript.stable.ID, starts_with("S")) %>%
+  rename("transcript_stable_ID" = Transcript.stable.ID)
+
+GSE.156037_converted
+
+nrow(GSE.156037)
+nrow(GSE.156037_converted)
+nrow(GSE.156037_converted) / nrow(GSE.156037)
+```
+<!-- original number of genes: 46,093 -->
+<!-- number of genes after conversion to external gene name: 45,928 -->
+<!-- proportion retained: 0.9964203 -->
+
+```{r geneID to transcriptID invivo data}
+invivo_converted <- merge(invivo, ID_df, by.x = "feature", by.y = "Gene.stable.ID", all.x = FALSE, all.y = FALSE)
+invivo_converted <- invivo_converted %>%
+  select(Transcript.stable.ID, starts_with("X")) %>%
+  rename("transcript_stable_ID" = Transcript.stable.ID)
+
+invivo_converted
+
+nrow(GSE.156037)
+nrow(GSE.156037_converted)
+nrow(GSE.156037_converted) / nrow(GSE.156037)
+```
+<!-- original number of genes: 46,909 -->
+<!-- number of genes after conversion to external gene name: 46,904 -->
+<!-- proportion retained: 0.9998934 -->
+
+### Check Samples Before Writing Out
+```{r check before write out}
+GSE.46257_converted
+GSE.49662
+GSE.55988
+GSE.46051
+GSE.54853_converted
+GSE.41205_merged
+GSE.63528_merged
+
+GSE.134196_converted
+GSE.156037_converted
+invivo_converted
+```
+
+
+### Write Out to CSV Files
+<!-- GSE.46257 -- mix of lowercase gene names and uppercase gene-synonym-looking IDs -->
+<!-- GSE.49662 -->
+<!-- GSE.55988 -->
+<!-- GSE.46051 -->
+<!-- GSE.54853 -- mix of lowercase gene names and uppercase gene-synonym-looking IDs -->
+<!-- GSE.41205_merged -->
+<!-- GSE.63528_merged -->
+<!-- GSE.134196 -- were WB genes, converted to external gene name -->
+<!-- GSE.156037 -- were WB genes, converted to external gene name -->
+<!-- invivo -- were WB genes, converted to external gene name -->
+*change directory as needed*
+```{r write out files}
+# set directory for where files should be written to
+setwd("~/bioinformatics/group-projects-invivo-fall-project/Cleaned_Datasets_transcript_stableID/")
+
+write_csv(GSE.46257_converted, "GSE46257_cleaned_transcrID.csv")
+write_csv(GSE.49662, "GSE49662_cleaned_transcrID.csv")
+write_csv(GSE.55988, "GSE55988_cleaned_transcrID.csv")
+write_csv(GSE.46051, "GSE46051_cleaned_transcrID.csv")
+write_csv(GSE.54853_converted, "GSE54853_cleaned_transcrID.csv")
+write_csv(GSE.41205_merged, "GSE41205_cleaned_transcrID.csv")
+write_csv(GSE.63528_merged, "GSE63528_cleaned_transcrID.csv")
+write_csv(GSE.134196_converted, "GSE134196_cleaned_transcrID.csv")
+write_csv(GSE.156037_converted, "GSE156037_cleaned_transcrID.csv")
+write_csv(invivo_converted, "invivo_cleaned_transcrID.csv")
+```
+
+
+
+
+
