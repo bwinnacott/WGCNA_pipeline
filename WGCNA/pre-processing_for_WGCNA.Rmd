@@ -3,7 +3,7 @@ title: "Pre-processing for WGCNA"
 output: html_document
 ---
 
-This script is for merging cleaned datasets (see Dataset_Cleanup_Tutorial.Rmd for cleanup information), normalizing counts, and removing rRNA genes.
+This script is for merging cleaned datasets (see Dataset_Cleanup_Tutorial.Rmd for cleanup information), removing rRNA genes, and creating the design matrix.
 
 ```{r}
 library(tidyverse)
@@ -21,10 +21,6 @@ GSE.49662_transcr <- read.csv("../Cleaned_Datasets_transcript_stableID/GSE49662_
 GSE.46051_transcr <- read.csv("../Cleaned_Datasets_transcript_stableID/GSE46051_cleaned_transcrID.csv")
 GSE.54853_transcr <- read.csv("../Cleaned_Datasets_transcript_stableID/GSE54853_cleaned_transcrID.csv")
 invivo_transcr <- read.csv("../Cleaned_Datasets_transcript_stableID/invivo_cleaned_transcrID.csv")
-
-
-# design matrix
-# design <- read.csv('from_Brendan/design_matrix.csv',header = TRUE)
 
 # check that they all look good
 head(GSE.55988_transcr)
@@ -100,11 +96,10 @@ writeout <- rownames_to_column(merged_final_no_rRNA, var = "transcript_stable_ID
 write.csv(writeout, "raw_wormspellGEO_transcript_stable_ID.csv")
 ```
 
-## Normalization
-
 ## Design Matrix
 
-Build the experimental design matrix from a metadata file. This metadata file should contain the 
+Build the experimental design matrix from a metadata file. The easiest way to create this metadata file
+is to use Excel or a similar application and save as a CSV. The metadata file should contain the 
 following columns: 1) Sample -> contains the descriptive name for each sample in the dataset, 2) 
 Condition -> contains the experimental condition for which the sample was subjected (i.e., Heat Stress, 
 DR, etc.), and 3) Label -> contains the original label provided in the counts dataset pulled from 
