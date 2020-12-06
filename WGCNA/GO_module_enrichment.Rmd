@@ -1,0 +1,455 @@
+---
+title: "GO vs Wormcat"
+output: html_document
+---
+
+Set appropriate working directory.
+```{r setup, include=FALSE}
+# sets the working directory for the entire notebook
+# change to directory where repo is located if necessary
+knitr::opts_knit$set(root.dir = '/Users/brendanwinnacott/bioinformatics/Bi610_lab/group-projects-invivo-fall-project/WGCNA/')
+options(stringsAsFactors = FALSE)
+```
+
+Read in appropriate packages and data objects for the analysis.
+```{r, message=FALSE}
+if (!requireNamespace("BiocManager", quietly = TRUE))
+  install.packages("BiocManager")
+
+if(!require(biomaRt)) BiocManager::install("biomaRt")
+if(!require(topGO)) BiocManager::install("topGO")
+if(!require(org.Ce.eg.db)) BiocManager::install("org.Ce.eg.db")
+if(!require(GO.db)) BiocManager::install("GO.db")
+# load the required libraries
+library(biomaRt)
+library(org.Ce.eg.db)
+library(GO.db)
+library(topGO)
+library(VennDiagram)
+library(wormcat)
+# load the gene expression and condition data
+data <- load(file = 'expression_trait_data.RData')
+# load the network data
+module_info <- load(file = 'module_information.RData')
+# adjust the module names to remove the 'ME'
+modules <- gsub('^ME','', modules)
+# take a look at the interesting traits/conditions correlated to modules generated from WGCNA
+traits
+modules
+```
+
+### Identifying Interesting Genes
+
+**Note:** This script is currently set up to run one treatment condition at a time and output 
+the results (gene information as well as GO term enrichment). To run more than one condition, 
+assign the 'condition' variable in the below code chunk to any of the conditions listed in the 
+output above and rerun the script. The setup as is (for both the WGCNA script and this one) 
+shows the 'darkgreen' module to correlate highly to the 'Group_C' treatment condition. For the 
+purpose of demonstration, this trait and module are used in the following analysis. 
+
+Get the total number of samples, genes, and modules in the dataset. Assign the experimental 
+condition (one of the options from the output above).
+```{r}
+# get the module names
+module_names <- gsub('^ME','',names(MEs))
+# get the number of genes and samples for analysis in this script
+nGenes <- ncol(datExpr)
+nSamples <- nrow(datExpr)
+# assign a condition of interest for analysis
+condition <- 'Group_C'
+
+# create a new directory to store the output from this analysis
+dir.create(sprintf('%s_%s_module',condition,modules[match(condition,traits)]))
+```
+
+Get the module membership values for all genes assigned to modules (not just modules of interest). 
+The module membership indicates how "central" a gene is to a given module, i.e., how similar the 
+expression of a gene across all samples is to the overall expression of the genes in a module (by 
+means of the eigengene). 
+```{r}
+# calculate the module membership and corresponding p-value for each gene
+geneModuleMembership <- as.data.frame(cor(datExpr, MEs, use = "p"))
+MMPvalue <- as.data.frame(corPvalueStudent(as.matrix(geneModuleMembership), nSamples))
+# update the names with the module names for reference
+names(geneModuleMembership) <- paste("MM", module_names, sep = "")
+names(MMPvalue) = paste("p.MM", module_names, sep = "")
+```
+
+Calculate the gene significance for all genes in each of the interesting modules pulled out from WGCNA. 
+```{r}
+# get the column from 'datTraits' associated with the experimental condition selected
+condition_vals <- as.data.frame(datTraits[,condition])
+names(condition_vals) <- condition
+# calculate the gene significance to the trait for all genes in the dataset
+geneTraitSignificance <- as.data.frame(cor(datExpr, condition_vals, use = "p"))
+# calculate the corresponding p-values
+GSPvalue <- as.data.frame(corPvalueStudent(as.matrix(geneTraitSignificance), nSamples))
+# rename the columns with condition label for easier reference
+names(geneTraitSignificance) <- paste("GS.", names(condition_vals), sep = "")
+names(GSPvalue) <- paste("p.GS.", names(condition_vals), sep = "")
+```
+
+Plot the gene significance by module membership for the selected trait and genes assigned to the module 
+highly correlated to the trait. 
+```{r}
+# select the module correlated to the treatment condition
+module <- modules[match(condition,traits)]
+# get the column index for the module
+column <- match(module, module_names)
+moduleGenes <- moduleColors == module
+verboseScatterplot(abs(geneModuleMembership[moduleGenes, column]),
+                   abs(geneTraitSignificance[moduleGenes, 1]),
+                   xlab = paste("Module Membership in", module, "module"),
+                   ylab = paste("Gene significance for",condition),
+                   main = paste("Module membership vs. gene significance\n"),
+                   cex.main = 1.2, cex.lab = 1.2, cex.axis = 1.2, col = 'black')
+```
+
+Get alternative gene IDs (Wormbase and common gene name) for gene to transcript mapping as well as GO 
+term mapping (later).
+```{r}
+# read in the file containing WB gene IDs, common gene names, and transcript IDs used in this dataset
+all_gene_ids <- read.table('../Cleaned_Datasets_transcript_stableID/celegans_cleaned_mart_ensembl.102.tsv',header = TRUE,sep = '\t')
+# get the genes assigned to the current module (highly correlated to selected trait)
+modgenes_ind <- (moduleColors == modules[match(condition,traits)])
+modgenes <- as.data.frame(colnames(datExpr[modgenes_ind]))
+colnames(modgenes) <- 'Transcript.stable.ID'
+# merge the data frames to get all gene IDs associated with the module
+modgenes <- merge(modgenes,all_gene_ids,by = 'Transcript.stable.ID')
+# check out the new data frame
+head(modgenes)
+```
+Get the list of genes in the interesting module and their corresponding gene significance values and 
+p-values. 
+```{r}
+# create the data frame
+gene_summary <- data.frame(Gene_name = modgenes$Gene.name,
+                           Wormbase_ID = modgenes$Gene.stable.ID,
+                           Modulecolor = moduleColors[modgenes_ind],
+                           Gene_Significance = geneTraitSignificance[modgenes_ind,],
+                           GS_Pvalue = GSPvalue[modgenes_ind,])
+# check out the new data frame
+head(gene_summary)
+```
+
+Add to the data frame the module membership information for each gene. 
+```{r}
+# get the column index for the module
+column <- match(module, module_names)
+# save the current column names for merging
+curr_names <- names(gene_summary)
+# merge the module membership information
+gene_summary <- data.frame(gene_summary, geneModuleMembership[modgenes_ind, column],
+                           MMPvalue[modgenes_ind, column])
+# rename the columns
+names(gene_summary) <- c(curr_names, paste("Module_Membership", sep = ""),
+                         paste("MM_Pvalue", sep = ""))
+```
+
+Incorporate log fold change information from differential gene expression (DGE) analysis. 
+Import the DGE output table. It is assumed that the DGE data is in the form of the output 
+from edgeR's 'glmLRT' function (currently how InVivo performs DGE analysis). **Note:** If 
+DGE analysis results are not available, skip this step. 
+```{r}
+# read in the DGE data
+dge_data <- read.csv('worm_A_vs_C_lrt.csv',header = TRUE)
+# merge the DGE data with the gene summary
+gene_summary <- merge(gene_summary,dge_data[,c(1,2,5)],by.x = 'Wormbase_ID',by.y = 'X')
+```
+
+Order the genes in the module by gene significance to the treatment condition. 
+```{r}
+# get the order index
+geneOrder <- order(-abs(gene_summary$Gene_Significance))
+# set the new order
+geneInfo <- gene_summary[geneOrder, ]
+# check out the final table
+head(geneInfo)
+```
+
+Write out gene information table.
+```{r}
+# set the working directory to match that created in the beginning of the script
+setwd(sprintf('%s_%s_module',condition,modules[match(condition,traits)]))
+# write out the results
+write.table(geneInfo,file = sprintf('module_%s_gene_metrics.tsv',modules[match(condition,traits)]),sep = '\t',row.names = FALSE)
+```
+
+### GO Analysis for Module Correlated to Selected Trait
+
+Get the full list of genes in the dataset (using common gene name IDs).
+```{r}
+# get all gene names in the dataset used for this analysis
+all_genes <- all_gene_ids$Gene.name
+# get genes contained within the module of interest
+gene_set <- geneInfo$Gene_name
+```
+
+Map GO terms to genes in the dataset.
+```{r map terms to genes}
+# generate gene to GO term mappings using biomaRt package
+db <- useMart('ENSEMBL_MART_ENSEMBL',dataset='celegans_gene_ensembl', host="www.ensembl.org")
+go_ids <- getBM(attributes=c('go_id', 'external_gene_name', 'namespace_1003'), filters='external_gene_name', values=all_genes, mart=db)
+```
+
+Modify mapping output from 'getBM' so it's compatible with topGO object
+```{r restructure mappings}
+# pull out the total number of genes of interest that have a GO annotation; first subset 
+# by gene IDs with category annotations
+with_annotations <- subset(go_ids,go_id != '')
+# modify annotation output for topGO object; gene to GO ID mapping object
+gene_to_GO <- unstack(with_annotations[,c(1,2)])
+# check out the gene to GO term mappings
+head(gene_to_GO)
+```
+
+Get total number of interesting genes with annotations (only considering a gene once).
+```{r annotation count}
+# only consider one annotation instance for each gene
+uniq_annots <- unique(with_annotations$external_gene_name)
+# identify the total number of annotated genes that are found in our gene set of interest
+gene_set_annot <- intersect(gene_set,uniq_annots)
+paste(sprintf('Total number of %s module associated genes w/GO annotations:',module),length(gene_set_annot))
+```
+
+Generate named vector for use with topGO class object instantiation. This creates a vector 
+with gene IDs as the names for each element. This step is necessary for providing all genes 
+as one object to be passed as an argument for the topGO class object. In this example scenario, 
+genes of interest are marked with 1 while other genes in the analysis are marked with 0. 
+```{r named vector}
+# obtain named vector representing all genes in analysis, with a factor level of '1' 
+# indicating gene of interest as defined in 'de_gene_set' and 0 if otherwise; this is 
+# required for the topGO class object instantiation
+final_genes <- factor(as.integer(all_genes %in% gene_set))
+# assign wormbase gene IDs for all genes to factor names
+names(final_genes) <- all_genes
+# check out the structure of the 'all_genes' object
+str(final_genes)
+```
+
+**Create topGO class objects for each of the three GO ontologies**  
+These class objects are used for term enrichment analysis. The three ontologies 
+associated with GO are biological process (BP), cellular component (CC), and molecular 
+function (MF).
+```{r topGO object, message=FALSE}
+# generate topGO object for analysis of the biological process (BP) ontology; using annotation 
+# function 'annFUN.gene2GO' due to mappings being provided; if mappings were not provided by user, 
+# see code commented out directly below this assignment
+geneID2GO_bp <- new("topGOdata",         # specify topGO class
+                 ontology="BP",          # choose ontology, options are "BP", "CC", and "MF"
+                 allGenes = final_genes,   # specifies named vector with all genes in input data set
+                 annot = annFUN.gene2GO, # function to perform gene to GO term mappings
+                 gene2GO = gene_to_GO)   # mappings provided by user (see code chunks 4-5)
+                 # use 'nodeSize=int' as an argument to set the minimum number of genes a GO term 
+                 # must have annotated to it for it to be included in the enrichment analysis; these 
+                 # terms with low numbers of annotated genes can be falsely detected as significantly enriched
+
+# if gene IDs such as 'entrez' or 'ensembl' are provided in the input data sets, mappings 
+# from 'biomaRt' functionality (see lines 112-113) are not required and can be specified in 
+# the topGO class object call (essentially line 112-121 are not necessary):
+
+# geneID2GO <- new("topGOdata", ontology="BP", allGenes = all_genes, annotationFun = annFUN.org, mapping = 'org.Ce.eg.db', ID = 'entrez')
+
+# check out the details of the new topGO class object
+geneID2GO_bp
+
+# get the topGO class object with annotations associated with 'CC' category
+geneID2GO_cc <- new("topGOdata",           
+                 ontology="CC",          # choose 'CC' for ontology
+                 allGenes = final_genes,   
+                 annot = annFUN.gene2GO,
+                 gene2GO = gene_to_GO)
+                 # use 'nodeSize=int' as an argument to set the minimum number of genes a GO term 
+                 # must have annotated to it for it to be included in the enrichment analysis
+
+# check out the details of the new topGO class object (with the cellular compartment category)
+geneID2GO_cc
+
+# now obtain the topGO class object with annotations associated with 'MF' category
+geneID2GO_mf <- new("topGOdata",           
+                 ontology="MF",          # choose 'MF' for ontology
+                 allGenes = final_genes,   
+                 annot = annFUN.gene2GO,
+                 gene2GO = gene_to_GO)
+                 # use 'nodeSize=int' as an argument to set the minimum number of genes a GO term 
+                 # must have annotated to it for it to be included in the enrichment analysis
+
+# check out the details of the new topGO class object (with the molecular function category)
+geneID2GO_mf
+```
+
+Note the dropoff from available genes to feasible genes for the ontologies. For example, in the 'BP' ontology, 
+46904 available genes drops to 8962 feasible genes for the analysis. 198 significant genes drop to 10 feasible 
+significant genes available for term enrichment. This is due to an incomplete set of GO annotations for a large 
+portion of the genes found in the input file.
+
+Perform enrichment tests for each ontology category. Classic and weighted fisher tests are used to 
+calculate enrichment of interesting genes in GO pathways. The difference between the two algorithms 
+is that one considers the GO topology (weighted), while the other does not. In other words, p-values 
+computed for a GO term are conditioned on the neighboring terms. Together, these tests provide additional 
+information for interpretation. 
+```{r, message=FALSE}
+# perform enrichment tests for the BP ontology
+# classic fisher test for over representation enrichment
+classic_fisher_result_bp <- runTest(geneID2GO_bp, algorithm = 'classic', statistic = 'fisher')
+# fisher test for enrichment using the weight01 algorithm, which takes into account the GO hierarchy
+weight_fisher_result_bp <- runTest(geneID2GO_bp, algorithm = 'weight01', statistic = 'fisher')
+
+# perform enrichment tests for the CC ontology
+# classic fisher test for over representation enrichment
+classic_fisher_result_cc <- runTest(geneID2GO_cc, algorithm = 'classic', statistic = 'fisher')
+# fisher test for enrichment using the weight01 algorithm, which takes into account the GO hierarchy
+weight_fisher_result_cc <- runTest(geneID2GO_cc, algorithm = 'weight01', statistic = 'fisher') 
+
+# perform enrichment tests for the MF ontology
+# classic fisher test for over representation enrichment
+classic_fisher_result_mf <- runTest(geneID2GO_mf, algorithm = 'classic', statistic = 'fisher')
+# fisher test for enrichment using the weight01 algorithm, which takes into account the GO hierarchy
+weight_fisher_result_mf <- runTest(geneID2GO_mf, algorithm = 'weight01', statistic = 'fisher') 
+```
+
+Create summary tables for the enrichment test results.
+```{r}
+# generate a summary table of the enrichment results for 'BP' ontology; store the top 20 results based on the weighted test
+enrich_results_bp <- GenTable(geneID2GO_bp, classic = classic_fisher_result_bp, weight = weight_fisher_result_bp, orderBy = 'weight', ranksOf = 'classic', topNodes = 20)  # if all terms are desired in the table, pass 
+                                               # length(genesInTerm(geneID2GO)) to 'topNodes'
+# display the first few terms
+head(enrich_results_bp)
+
+# generate a summary table of the enrichment results for 'CC' ontology; store the top 20 results based on the weighted test
+enrich_results_cc <- GenTable(geneID2GO_cc, classic = classic_fisher_result_cc, weight = weight_fisher_result_cc, orderBy = 'weight', ranksOf = 'classic', topNodes = 20)  # if all terms are desired in the table, pass 
+                                               # length(genesInTerm(geneID2GO)) to 'topNodes'
+# display the first few terms
+head(enrich_results_cc)
+
+# generate a summary table of the enrichment results for 'MF' ontology; store the top 20 results based on the weighted test
+enrich_results_mf <- GenTable(geneID2GO_mf, classic = classic_fisher_result_mf, weight = weight_fisher_result_mf, orderBy = 'weight', ranksOf = 'classic', topNodes = 20)  # if all terms are desired in the table, pass 
+                                               # length(genesInTerm(geneID2GO)) to 'topNodes'
+# display the first few terms
+head(enrich_results_mf)
+```
+
+```{r}
+# remove any potential '<' signs that show up when the p-value returned is less than 1e-30. This 
+# term will be removed when filtering by p-value, so this character needs to be accounted for
+enrich_results_bp$classic <- gsub('< ','',enrich_results_bp$classic)
+enrich_results_bp$weight <- gsub('< ','',enrich_results_bp$weight)
+enrich_results_cc$classic <- gsub('< ','',enrich_results_cc$classic)
+enrich_results_cc$weight <- gsub('< ','',enrich_results_cc$weight)
+enrich_results_mf$classic <- gsub('< ','',enrich_results_mf$classic)
+enrich_results_mf$weight <- gsub('< ','',enrich_results_mf$weight)
+```
+
+**Add FDR correct p-value column to each results table**  
+The adjusted statistic is computed from the classic p-values due to multiple testing correction 
+for the weighted algorithm being a bit less robust/necessary (non-independent testing). The weighted 
+p-values are considered corrected for the purposes of this analysis. 
+```{r, warning=FALSE}
+# produce a column containing the bonferroni corrected weighted values (FDR corrected) for each of the above tables
+# for some reason the p-values are reported as string, not numeric
+enrich_results_bp$classic <- as.numeric(enrich_results_bp$classic)
+enrich_results_cc$classic <- as.numeric(enrich_results_cc$classic)
+enrich_results_mf$classic <- as.numeric(enrich_results_mf$classic)
+# add column with adjusted p-values (FDR corrected) to each table
+enrich_results_bp$adj_pval_classic <- p.adjust(enrich_results_bp$classic,method = 'fdr',n = nrow(enrich_results_bp))
+enrich_results_cc$adj_pval_classic <- p.adjust(enrich_results_cc$classic,method = 'fdr',n = nrow(enrich_results_cc))
+enrich_results_mf$adj_pval_classic <- p.adjust(enrich_results_mf$classic,method = 'fdr',n = nrow(enrich_results_mf))
+```
+
+**Select enriched terms with a FDR corrected p-value below 0.05**  
+```{r}
+# for each ontology results table, get all terms that are enriched at an adjusted p-value threshold (i.e., 0.05)
+results_adjp_bp <- subset(enrich_results_bp,adj_pval_classic <= 0.05)
+results_adjp_cc <- subset(enrich_results_cc,adj_pval_classic <= 0.05)
+results_adjp_mf <- subset(enrich_results_mf,adj_pval_classic <= 0.05)
+# show the first few lines of the updated results tables
+head(results_adjp_bp)
+head(results_adjp_cc)
+head(results_adjp_mf)
+```
+
+**Get all genes and significant genes associated with statistically enriched terms**  
+```{r}
+# get all genes that are associated with an enriched term; perform for each ontology
+GO_genes_bp <- genesInTerm(geneID2GO_bp)
+GO_genes_cc <- genesInTerm(geneID2GO_cc)
+GO_genes_mf <- genesInTerm(geneID2GO_mf)
+# get significant genes that are associated with a GO term; perform for each ontology
+sig_genes_bp <- sigGenes(geneID2GO_bp)
+sig_genes_cc <- sigGenes(geneID2GO_cc)
+sig_genes_mf <- sigGenes(geneID2GO_mf)
+```
+
+**Add the significant gene IDs to each results table as a column**  
+```{r}
+# add list of significant genes associated with significantly enriched GO terms to each table above as separate column
+results_adjp_bp$Significant_Genes <- sapply(results_adjp_bp$GO.ID, function(x){
+  genes <- GO_genes_bp[x][[1]]
+  genes[genes %in% sig_genes_bp]
+})
+results_adjp_cc$Significant_Genes <- sapply(results_adjp_cc$GO.ID, function(x){
+  genes <- GO_genes_cc[x][[1]]
+  genes[genes %in% sig_genes_cc]
+})
+results_adjp_mf$Significant_Genes <- sapply(results_adjp_mf$GO.ID, function(x){
+  genes <- GO_genes_mf[x][[1]]
+  genes[genes %in% sig_genes_mf]
+})
+```
+
+**Reformat significant gene IDs column so tables can be written out as csv**  
+The gene IDs are added as a comma separated list, for use in further analyses if desired.
+```{r}
+# reformat the data in the significant gene list column just created; do so for each ontology's results table
+if (nrow(results_adjp_bp) > 0) {
+  for (i in 1:length(results_adjp_bp$Significant_Genes)) {
+    results_adjp_bp$Significant_Genes[[i]] <- paste(unlist(results_adjp_bp$Significant_Genes[[i]]),sep = '',collapse = ', ')
+  }
+}
+if (nrow(results_adjp_cc) > 0) {
+  for (i in 1:length(results_adjp_cc$Significant_Genes)) {
+    results_adjp_cc$Significant_Genes[[i]] <- paste(unlist(results_adjp_cc$Significant_Genes[[i]]),sep = '',collapse = ', ')
+  }
+}
+if (nrow(results_adjp_mf) > 0) {
+  for (i in 1:length(results_adjp_mf$Significant_Genes)) {
+    results_adjp_mf$Significant_Genes[[i]] <- paste(unlist(results_adjp_mf$Significant_Genes[[i]]),sep = '',collapse = ', ')
+  }
+}
+
+# change data type from list to character so results can be written out to file
+results_adjp_bp$Significant_Genes <- as.character(results_adjp_bp$Significant_Genes)
+results_adjp_cc$Significant_Genes <- as.character(results_adjp_cc$Significant_Genes)
+results_adjp_mf$Significant_Genes <- as.character(results_adjp_mf$Significant_Genes)
+```
+
+**Write out enrichment results for each GO ontology category to csv**  
+```{r}
+# set the working directory to match that created in the beginning of the script
+setwd(sprintf('%s_%s_module',condition,modules[match(condition,traits)]))
+# write the results out to a tsv file for each ontology
+if (nrow(results_adjp_bp) > 0) {
+  write.table(results_adjp_bp,sprintf('%s_term_enrichment_results_bp.tsv',modules[match(condition,traits)]),sep = '\t',row.names = FALSE)
+}
+if (nrow(results_adjp_cc) > 0) {
+  write.table(results_adjp_cc,sprintf('%s_term_enrichment_results_cc.tsv',modules[match(condition,traits)]),sep = '\t',row.names = FALSE)
+}
+if (nrow(results_adjp_mf) > 0) {
+  write.table(results_adjp_mf,sprintf('%s_term_enrichment_results_mf.tsv',modules[match(condition,traits)]),sep = '\t',row.names = FALSE)
+}
+```
+
+### Wormcat Term Enrichment Analysis
+
+
+
+
+
+
+
+
+
+
+
+
+

@@ -7,11 +7,11 @@ output: html_document
 # set global parameters for the file
 require("knitr")
 opts_knit$set(root.dir = "/Users/brendanwinnacott/bioinformatics/Bi610_lab/group-projects-invivo-fall-project/WGCNA/")
-# fig.dim <- 6
-# knitr::opts_chunk$set(echo = FALSE,
-                      #fig.width=2*fig.dim,
-                      #fig.height=fig.dim,
-                      #fig.align='center')
+ fig.dim <- 6
+ knitr::opts_chunk$set(echo = FALSE,
+                      fig.width=2*fig.dim,
+                      fig.height=fig.dim,
+                      fig.align='center')
 ```
 
 Load required packages for analysis.
@@ -139,9 +139,9 @@ plot(sft$fitIndices[,1], sft$fitIndices[,5], xlab = "Soft Threshold (power)", yl
 text(sft$fitIndices[,1], sft$fitIndices[,5], labels = powers, col = "red")
 ```
 
-Based on our sample dataset, a soft threshold power value of 8 is appropriate for network analysis. **Note:** 
-For future datasets, change the 'softPower' variable to reflect the chosen power value based on the above 
-graphs. 
+Based on our sample dataset (Wormbase Spell), a soft threshold power value of 8 is appropriate for network 
+analysis. **Note:** For future datasets, change the 'softPower' variable to reflect the chosen power value 
+based on the above graphs. 
 ```{r get adjacency matrix}
 softPower <- 8
 adjacency <- adjacency(datExpr, power = softPower, type = "signed") #specify network type, we care about the direction of change so the 'type' is set to 'signed'; if direction of correlation is not important, set to 'unsigned'
@@ -152,7 +152,7 @@ This calculation takes the gene correlations and provides topology information t
 ```{r get TOM matrix}
 TOM <- TOMsimilarity(adjacency, TOMType = "signed") # specify network type; make sure its the same specification as provided in the 'adjacency' function call above
 dissTOM <- 1-TOM
-rm(adjacency)
+rm(adjacency) # free up some memory
 ```
 
 This code chunk generates the modules from the network. Only parameters set globally need to be changed, for 
@@ -165,8 +165,8 @@ geneTree <- flashClust(as.dist(dissTOM), method = "average")
 # plot the dendrogram
 plot(geneTree, xlab = "", sub = "", main = "Gene Clustering on TOM-based dissimilarity", labels = FALSE, hang = 0.04)
 
-#This sets the minimum number of genes to cluster into a module
-minModuleSize <- 300
+# This sets the minimum number of genes to cluster into a module
+minModuleSize <- 100
 # this function is used to build the modules
 dynamicMods <- cutreeDynamic(dendro = geneTree, distM = dissTOM, deepSplit = 2, pamRespectsDendro = FALSE, minClusterSize = minModuleSize)
 
@@ -186,7 +186,7 @@ but can be changed to any value based on above eigengene dendrogram), and plot t
 with module assignment below. 
 ```{r merge similar modules}
 # set a threhold for merging modules. if merging is not desired, set the value to 0.0
-MEDissThres <- 0
+MEDissThres <- 0.25
 merge <- mergeCloseModules(datExpr, dynamicColors, cutHeight = MEDissThres, verbose = 3)
 mergedColors <- merge$colors
 mergedMEs <- merge$newMEs
@@ -219,7 +219,7 @@ textMatrix <- paste(signif(moduleTraitCor, 2), "\n(",
                     signif(moduleTraitPvalue, 1), ")", sep = "")
 dim(textMatrix) <- dim(moduleTraitCor)
 par(mar = c(7, 10, 3, 3))
-tiff('module_trait_relationship.tif',width=6,height=4,units='in',res = 300)
+# tiff('module_trait_relationship.tif',width=6,height=4,units='in',res = 300)
 # display the corelation values with a heatmap plot
 labeledHeatmap(Matrix = moduleTraitCor, 
                xLabels = names(datTraits), 
@@ -230,26 +230,29 @@ labeledHeatmap(Matrix = moduleTraitCor,
                textMatrix = textMatrix, 
                xLabelsAngle = 90,
                setStdMargins = FALSE, 
-               cex.lab = 0.35,
-               cex.text = 0.25, 
+               cex.lab = 0.9,
+               cex.text = 0.3, 
                zlim = c(-1,1), 
                main = "Module-trait relationships")
-dev.off()
+# dev.off()
 ```
 
-Pull out the interesting modules and the traits they correlate to for downstream analysis. 
+Pull out the interesting modules and the traits they correlate to for downstream analysis.  
 ```{r get interesting modules}
 # set a correlation threshold for selecting interesting modules and the traits they highly correlate to
-corThreshold <- 0.77
+corThreshold <- 0.75
 # get the module colors and trait names
 indexes <- which(abs(moduleTraitCor) >= corThreshold, arr.ind = TRUE)
 modules <- rownames(indexes)
 traits <- colnames(moduleTraitCor[,indexes[,2],drop=FALSE])
 modules
+traits
 ```
 
-Save the module and trait information for identifying interesting genes and pathways.
+With the current parameters and dataset, it can be seen from the heatmap above that the 'darkgreen' 
+module correlates highly to the 'Group_C' condition (InVivo provided transcriptomic profile). Save 
+the module and trait information for identifying interesting genes and pathways.
 ```{r save module information}
 # save the module information for downstream analysis
-save(MEs, modules, traits, file = "module_information.RData")
+save(MEs, moduleColors, modules, traits, file = "module_information.RData")
 ```
