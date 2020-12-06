@@ -23,10 +23,8 @@ Set working directory
 knitr::opts_knit$set(root.dir = '~/bioinformatics/group-projects-invivo-fall-project/')
 ```
 
-Install and load libraries
+Load libraries
 ```{r libraries, message=FALSE}
-# if(!require(biomaRt)) BiocManager::install("biomaRt")
-
 library(tidyverse)
 library(readxl)
 ```

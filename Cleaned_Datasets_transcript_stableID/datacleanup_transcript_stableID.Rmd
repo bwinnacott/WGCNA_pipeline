@@ -52,7 +52,7 @@ GSE.41205_KU25genes
 
 ```{r GSE46257}
 setwd('~/bioinformatics/InVivo/')
-GSE.46257 <- read.csv("Selected_GEO_datasets/GSE46257_Schmeisser_2013_arsenite/GSE46257_ce_Nr35-38_counts_rpkm.csv")
+GSE.46257 <- read_xls("Selected_GEO_datasets/GSE46257_Schmeisser_2013_arsenite/GSE46257_ce_Nr35-38_counts_rpkm.xls")
 GSE.46257
 ```
 <!-- external_gene_name -->
@@ -236,7 +236,7 @@ ID_df
 
 
 ```{r GSE46257 cleanup}
-GSE.46257_converted <- merge(GSE.46257, ID_df, by.x = "X", by.y = "Gene.name", all.x = FALSE, all.y = FALSE)
+GSE.46257_converted <- merge(GSE.46257, ID_df, by.x = "gene", by.y = "Gene.name", all.x = FALSE, all.y = FALSE)
 GSE.46257_converted <- GSE.46257_converted %>%
   select(Transcript.stable.ID, ends_with("counts")) %>%
   rename("transcript_stable_ID" = Transcript.stable.ID)
@@ -308,6 +308,7 @@ GSE.63528_merged
 
 ```{r GSE49662 cleanup}
 # drop extra gene ID column and rename kept one to transcript_stable_ID
+GSE.49662
 GSE.49662 <- GSE.49662 %>%
   select("ensembl_gene_id", starts_with("Nr"))  %>%
   rename("transcript_stable_ID" = ensembl_gene_id)
