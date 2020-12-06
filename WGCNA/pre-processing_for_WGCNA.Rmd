@@ -3,7 +3,7 @@ title: "Pre-processing for WGCNA"
 output: html_document
 ---
 
-This script is for merging cleaned datasets (see Dataset_Cleanup_Tutorial.Rmd for cleanup information), removing rRNA genes, and creating the design matrix.
+This script is for merging cleaned datasets (see Dataset_Cleanup_Tutorial.Rmd for cleanup information), removing rRNA genes, normalization, and creating the design matrix.
 
 ```{r}
 library(tidyverse)
@@ -89,12 +89,55 @@ merged_final_no_rRNA <- merged_final[!(rownames(merged_final) %in% rrna),]
 merged_final_no_rRNA
 ```
 
-```{r}
+Comment back in for writing out raw counts
+<!-- Write out raw counts  -->
+<!-- ```{r write out merged raw counts} -->
+<!-- setwd("~/bioinformatics/group-projects-invivo-fall-project/WGCNA/") -->
+
+<!-- writeout <- rownames_to_column(merged_final_no_rRNA, var = "transcript_stable_ID") -->
+<!-- write.csv(writeout, "raw_wormspellGEO_transcript_stable_ID.csv") -->
+<!-- ``` -->
+
+## Normalization
+
+```{r TPM normalization}
+# get length data
+length_data <- read.table("~/bioinformatics/group-projects-invivo-fall-project/BGMP_IVB_2020_dataset/GC_lengths.tsv",
+                          header = TRUE, sep="\t", check.names = FALSE)
+length_data <- length_data[!(rownames(length_data) %in% rrna),]   # remove rRNA genes from length data
+length_data$Length <- as.numeric(length_data$Length)
+length_data$Length_kb <- length_data$Length / 1000   # store length in kb
+
+# convert length data IDs
+ID_table <- read.csv("~/bioinformatics/group-projects-invivo-fall-project/Cleaned_Datasets_transcript_stableID/celegans_cleaned_mart_ensembl.102.tsv", sep = "\t")
+length_data <- rownames_to_column(length_data, var = "Gene.stable.ID")
+lengthdata_converted <- merge(length_data, ID_table, by="Gene.stable.ID", all.x = FALSE, all.y = FALSE)
+lengthdata_converted <- lengthdata_converted %>%
+  select(Transcript.stable.ID, Length_kb) %>%
+  rename("transcript_stable_ID" = Transcript.stable.ID)
+lengthdata_converted
+
+
+merged_with_lengths <- merge(merged_final_no_rRNA, lengthdata_converted, by.x=0, by.y="transcript_stable_ID", sort = TRUE)
+counts_per_kb <- merged_with_lengths[,2:(ncol(merged_with_lengths)-1)]/merged_with_lengths[,(ncol(merged_with_lengths))]
+rownames(counts_per_kb) <- merged_with_lengths$Row.names
+scale_factors <- (colSums(counts_per_kb) / 10^6)
+tpm_normalized_df <- counts_per_kb / scale_factors
+tpm_normalized_df
+
+# log transformation
+tmp_withLogtrans <- log2((tpm_normalized_df+1))
+tmp_withLogtrans
+```
+
+Write out TPM normalized counts
+```{r write out merged raw counts}
 setwd("~/bioinformatics/group-projects-invivo-fall-project/WGCNA/")
 
 writeout <- rownames_to_column(merged_final_no_rRNA, var = "transcript_stable_ID")
-write.csv(writeout, "raw_wormspellGEO_transcript_stable_ID.csv")
+write.csv(writeout, "TPM_wormspellGEO_transcript_stable_ID.csv")
 ```
+
 
 ## Design Matrix
 
