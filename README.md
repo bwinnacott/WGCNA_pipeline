@@ -1,2 +1,4 @@
-# group-projects-invivo-fall-project
-group-projects-invivo-fall-project created by GitHub Classroom
+# UO in collaboration with InVivo Biosystems
+## Weighted Gene Co-expression Network Analysis (WGCNA) and functional annotation pipeline
+
+### Table of contents
