@@ -1,0 +1,62 @@
+Sample,Condition,Label
+N2_rep2,WT Control,N2.2
+eat_2_rep2,DR Mutant,Eat2.2
+nhr_62_rep2,nhr-62 Mutant,Nhr62.2
+nhr_62_eat_2_rep2,nhr-62 and DR Mutant,Nhr62Eat2.2
+N2_rep3,WT Control,N2.3
+eat_2_rep3,DR Mutant,Eat2.3
+nhr_62_rep3,nhr-62 Mutant,Nhr62.3
+nhr_62_eat_2_rep3,nhr-62 and DR Mutant,Nhr62Eat2.3
+N2_rep1,WT Control,N2.1
+eat_2_rep1,DR Mutant,Eat2.1
+nhr_62_rep1,nhr-62 Mutant,Nhr62.1
+nhr_62_eat_2_rep1,nhr-62 and DR Mutant,Nhr62Eat2.1
+Nr101_NA_rep1,Nicotinic acid,Nr101.NA
+Nr_102_H2O_rep1,H20 Control,Nr102.H2O
+Nr_103_MNA_rep_1,MNA,Nr103.MNA
+Nr104_NA_rep2,Nicotinic acid,Nr104.NA
+Nr_102_H2O_rep2,H20 Control,Nr105.H2O
+Nr_103_MNA_rep_2,MNA,Nr106.MNA
+Nr107_NA_rep3,Nicotinic acid,Nr107.NA
+Nr_102_H2O_rep3,H20 Control,Nr108.H2O
+Nr_103_MNA_rep_3,MNA,Nr109.MNA
+Nr01_DMSO_1day_rep1,DMSO 1day,JA1
+Nr02_DMSO_1day_rep2,DMSO 1day,JA2
+Nr03_DMSO_1day_rep3,DMSO 1day,JA3
+Nr04_Rotenone_1day_rep1,Rotenone 1day,JA4
+Nr05_Rotenone_1day_rep2,Rotenone 1day,JA5
+Nr06_Rotenone_1day_rep3,Rotenone 1day,JA6
+Nr10_DMSO_5day_rep1,DMSO 5day,JA10
+Nr11_DMSO_5day_rep2,DMSO 5day,JA11
+Nr12_DMSO_5day_rep3,DMSO 5day,JA12
+Nr13_Rotenone_5day_rep1,Rotenone 5day,JA13
+Nr14_Rotenone_5day_rep2,Rotenone 5day,JA14
+Nr15_Rotenone_5day_rep3,Rotenone 5day,JA15
+Nr19_DMSO_10day_rep1,DMSO 10day,JA19
+Nr20_DMSO_10day_rep2,DMSO 10day,JA20
+Nr21_DMSO_10day_rep3,DMSO 10day,JA21
+Nr22_Rotenone_10day_rep1,Rotenone 10day,JA22
+Nr23_Rotenone_10day_rep2,Rotenone 10day,JA23
+Nr24_Rotenone_10day_rep3,Rotenone 10day,JA24
+Nr28_DMSO_20day_rep1,DMSO 20day,JA28
+Nr29_DMSO_20day_rep2,DMSO 20day,JA29
+Nr30_Rotenone_20day_rep1,Rotenone 20day,JA30
+Nr31_Rotenone_20day_rep2,Rotenone 20day,JA31
+Nr01_no_GlcN,No D-Glucosamine,Nr01
+Nr02_no_GlcN,No D-Glucosamine,Nr02
+Nr03_no_GlcN,No D-Glucosamine,Nr03
+Nr04_no_GlcN,No D-Glucosamine,Nr04
+Nr05_no_GlcN,No D-Glucosamine,Nr05
+Nr06_no_GlcN,No D-Glucosamine,Nr06
+Nr07_GlcN,D-Glucosamine,Nr07
+Nr08_GlcN,D-Glucosamine,Nr08
+Nr09_GlcN,D-Glucosamine,Nr09
+Nr10_GlcN,D-Glucosamine,Nr10
+Nr11_GlcN,D-Glucosamine,Nr11
+Nr12_GlcN,D-Glucosamine,Nr12
+249_1813_B,Group_B,249_1813_B
+291_37_C,Group_C,291_37_C
+294_1781_A,Group_A,294_1781_A
+299_1781_A,Group_A,299_1781_A
+310_37_C,Group_C,310_37_C
+318_1813_B,Group_B,318_1813_B

@@ -6,7 +6,7 @@ output: html_document
 ```{r setup, include=FALSE, echo=FALSE}
 # set global parameters for the file
 require("knitr")
-opts_knit$set(root.dir = "~/bioinformatics/Bi610_lab/InVivo/WGCNA/Experimental/")
+opts_knit$set(root.dir = "/Users/brendanwinnacott/bioinformatics/Bi610_lab/group-projects-invivo-fall-project/WGCNA")
 fig.dim <- 6
 knitr::opts_chunk$set(echo = FALSE,
                       fig.width=2*fig.dim,
@@ -15,7 +15,7 @@ knitr::opts_chunk$set(echo = FALSE,
 ```
 
 Load required packages for analysis.
-```{r, message=FALSE}
+```{r load packages, message=FALSE}
 if (!requireNamespace("BiocManager", quietly = TRUE))
   install.packages("BiocManager")
 if(!require(flashClust)) BiocManager::install("flashClust")
@@ -30,18 +30,18 @@ options(stringsAsFactors = FALSE)
 ```
 
 Load raw expression data containing genes as rows and samples as columns.
-```{r}
+```{r get expression data}
+# set the gene ID label being used in this experiment (i.e., external_gene_name, wormbase_gene, transcript_stable_ID, etc.)
+gene_ids <- 'transcript_stable_ID'
 # read in data and set gene names as rownames
-datExpr <- read.csv("raw_GEO_counts.csv")
-row.names(datExpr) <- datExpr$X
+datExpr <- read.csv("raw_wormspellGEO_transcript_stable_ID.csv",row.names = gene_ids)
 datExpr$X <- NULL
 # "head" the file to preview it
 head(datExpr)
 ```
 
-Normalize the raw gene counts using edgeR's 'calcNormFactors' function. Should we use DESeq's 
-'varianceStabilizingTransformation' function here on the raw counts instead??
-```{r}
+Normalize the raw gene counts using edgeR's 'calcNormFactors' function.
+```{r edgeR normalization}
 # now normalize the raw count data
 norm.er <- DGEList(counts = datExpr)
 norm.er <- calcNormFactors(norm.er)
@@ -57,7 +57,7 @@ Modify the expression data so it is compatible with WGCNA processing (i.e., tran
 so that samples are now rows and genes are columns). Remove genes and samples that have excessive 
 missing entries or zero variance. Parameters for 'goodSamplesGenes' function can be modified to 
 meet the needs of the data.
-```{r, results='hide'}
+```{r remove genes with missing values or no variance, results='hide'}
 datExpr <- as.data.frame(t(datExpr))
 rownames(datExpr) <- sub('^X','',rownames(datExpr))
 dim(datExpr)
@@ -75,72 +75,52 @@ if (!gsg$allOK)
 		}
 ```
 
-This section requires a bit of manual examination to ensure that all samples are satisfactory for analysis, i.e., 
+This section provides a sample examination to ensure that all samples are satisfactory for analysis, i.e., 
 there are no outlier samples present in the dataset.
-```{r}
+```{r check for outlier samples}
 sampleTree <- hclust(dist(datExpr), method = "average")
 # set the parameters for the plot
 sizeGrWindow(12,9)
 par(cex = 0.6)
 par(mar = c(0,4,2,0))
-plot(sampleTree, main = "Sample clustering to detect outliers", sub = "", xlab = "", cex.lab = 1.5,
+plot(sampleTree, main = "Sample clustering", sub = "", xlab = "", cex.lab = 1.5,
 cex.axis = 1.5, cex.main = 2)
-```
-
-Based on the above dendrogram, we can see the sample 'Nr14_Rotenone_5day_rep2' is an outlier. We can 
-remove the sample from the dataset with the following code chunk. Set the 'cutHeight' parameter passed 
-to 'cutreeStatic' function as a value based on the above plot that removes the offending sample (for 
-this example, that value is 100000). **Note:** if no samples are to be removed from the dataset, this 
-code chunk can be skipped. 
-```{r}
-# Determine cluster under the line
-clust <- cutreeStatic(sampleTree, cutHeight = 100000, minSize = 10)
-table(clust)
-# clust 1 contains the samples we want to keep.
-keepSamples <- (clust == 1)
-datExpr <- datExpr[keepSamples, ]
-nGenes <- ncol(datExpr)
-nSamples <- nrow(datExpr)
 ```
 
 Import the design matrix containing the condition information, mapping samples to specific conditions 
 or treatments used in this dataset. The sample names from the expression data frame 'datExpr' is mapped 
 onto the new data frame 'datTraits' so even if the names are different in the file being imported, this 
 code chunk will make them match.
-```{r}
+```{r get trait data}
 # Create an object called "datTraits" that contains your trait data
-datTraits <- read.csv("design_matrix.csv")
-# map the sample names from 'datExpr' to the new trait data frame
-samples <- rownames(datExpr)
-traitrows <- match(samples,datTraits$Sample)
-datTraits <- datTraits[traitrows,]
-# modify the trait data frame so that it matches the expression data
-rownames(datTraits) <- datTraits$Sample
-datTraits$Sample <- NULL
+datTraits <- read.csv("design_matrix.csv",row.names = 1)
+# modify the expression data frame so that it matches the trait sample names
+rownames(datExpr) <- rownames(datTraits)
+# check out the traits data
 head(datTraits)
 # ensure rownames for both the expression dataset and condition (design) dataset are equal
 table(rownames(datTraits) == rownames(datExpr))
 ```
 
 Save the processed and cleaned datasets for use in downstream analysis.
-```{r}
-save(datExpr, datTraits, file = "DataInput_WBconditions.RData")
+```{r save data}
+save(datExpr, datTraits, file = "expression_trait_data.RData")
 ```
 
 This code chunk chooses a soft thresholding power for which the pairwise gene correlations are raised 
 to amplify the differences between strong and weak correlations present in the data. This code takes 
 a few minutes to run. A modified version of the biweight midcorrelation function is used ('bicor'), 
 which has been found to work well with gene expression data. 
-```{r}
+```{r soft thresholding calculations}
 powers <- c(c(1:10), seq(from = 10, to = 20, by = 1)) # choosing a set of soft-thresholding powers
-sft <- pickSoftThreshold(datExpr, powerVector = powers, corFnc = 'bicor', verbose = 5, networkType = "signed") # call network topology analysis function
+sft <- pickSoftThreshold(datExpr, powerVector = powers, verbose = 5, networkType = "signed") # call network topology analysis function
 ```
 
 This plot shows the scale free topology model fit (R^2) for each of the thresholds chosen above. The idea 
 is to choose the smallest threshold that reaches the 0.9 correlation cutoff value (red line in plot). The 
 model fit (R^2) represents how well the connections within the graph approximate a scale free topology (i.e., 
 few nodes with many connections and many nodes with few connections).
-```{r}
+```{r scale independence plot}
 plot(sft$fitIndices[,1], -sign(sft$fitIndices[,3])*sft$fitIndices[,2], xlab = "Soft Threshold (power)", ylab = "Scale Free Topology Model Fit, signed R^2",
      type = "n", main = paste("Scale independence"))
 text(sft$fitIndices[,1], -sign(sft$fitIndices[,3])*sft$fitIndices[,2], labels = powers, col = "red")
@@ -151,31 +131,32 @@ This plot shows the mean connectivity for nodes in the network. Although the pre
 more important metric for selecting a soft thresholding power, a higher mean connectivity is desired for 
 network analysis. As shown by the two graphs, there is a trade-off, so the best threshold is a balance 
 between the two.
-```{r}
+```{r mean connectivity plot}
 plot(sft$fitIndices[,1], sft$fitIndices[,5], xlab = "Soft Threshold (power)", ylab = "Mean Connectivity", type = "n", main = paste("Mean connectivity"))
 text(sft$fitIndices[,1], sft$fitIndices[,5], labels = powers, col = "red")
 ```
 
-Based on our sample dataset, a soft threshold power value of 10 is appropriate for network analysis. **Note:** 
+Based on our sample dataset, a soft threshold power value of 8 is appropriate for network analysis. **Note:** 
 For future datasets, change the 'softPower' variable to reflect the chosen power value based on the above 
 graphs. 
-```{r}
-softPower <- 9
-adjacency <- adjacency(datExpr, power = softPower, corFnc = 'bicor', type = "signed") #specify network type, we care about the direction of change so the 'type' is set to 'signed'; if direction of correlation is not important, set to 'unsigned'
+```{r get adjacency matrix}
+softPower <- 8
+adjacency <- adjacency(datExpr, power = softPower, type = "signed") #specify network type, we care about the direction of change so the 'type' is set to 'signed'; if direction of correlation is not important, set to 'unsigned'
 ```
 
 Construct the network by computing the topological overlap matrix and the corresponding dissimilarity values. 
 This calculation takes the gene correlations and provides topology information to build the network.
-```{r}
+```{r get TOM matrix}
 TOM <- TOMsimilarity(adjacency, TOMType = "signed") # specify network type; make sure its the same specification as provided in the 'adjacency' function call above
 dissTOM <- 1-TOM
+rm(adjacency)
 ```
 
 This code chunk generates the modules from the network. Only parameters set globally need to be changed, for 
 example, 'minModuleSize' can be changed to meet the needs of the analysis. Other parameters within the functions 
 can stay the same for now. Additionally, the second plot shows a dendrogram of module dissimilarity. This can 
 be used to set thresholds for merging module with similar expression profiles. 
-```{r}
+```{r generate modules}
 # Generate a clustered gene tree
 geneTree <- flashClust(as.dist(dissTOM), method = "average")
 # plot the dendrogram
@@ -200,7 +181,7 @@ plot(METree, main = "Clustering of module eigengenes", xlab = "", sub = "")
 Choose a dissimilarity threshold for merging similar modules (0.25 is suggested so will be the default here, 
 but can be changed to any value based on above eigengene dendrogram), and plot the corresponding dendrogram 
 with module assignment below. 
-```{r}
+```{r merge similar modules}
 # set a threhold for merging modules. if merging is not desired, set the value to 0.0
 MEDissThres <- 0.25
 merge <- mergeCloseModules(datExpr, dynamicColors, cutHeight = MEDissThres, verbose = 3)
@@ -219,7 +200,7 @@ MEDiss <- 1-cor(MEs)
 ```
 
 Correlate the modules to external traits in the dataset.
-```{r}
+```{r correlate modules to traits}
 # Define number of genes and samples
 nGenes <- ncol(datExpr)
 nSamples <- nrow(datExpr)
@@ -250,9 +231,9 @@ labeledHeatmap(Matrix = moduleTraitCor,
 ```
 
 Pull out the interesting modules and the traits they correlate to for downstream analysis. 
-```{r}
+```{r get interesting modules}
 # set a correlation threshold for selecting interesting modules and the traits they highly correlate to
-corThreshold <- 0.7
+corThreshold <- 0.75
 # get the module colors and trait names
 indexes <- which(abs(moduleTraitCor) >= corThreshold,arr.ind = TRUE)
 modules <- row.names(moduleTraitCor[indexes[,1],])
@@ -260,7 +241,7 @@ traits <- colnames(moduleTraitCor[,indexes[,2]])
 ```
 
 Save the module and trait information.
-```{r}
+```{r save module information}
 # save the module information for downstream analysis
 save(MEs, modules, traits, file = "module_information.RData")
 ```

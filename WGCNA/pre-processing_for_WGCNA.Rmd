@@ -104,6 +104,26 @@ write.csv(writeout, "raw_wormspellGEO_transcript_stable_ID.csv")
 
 ## Design Matrix
 
+Build the experimental design matrix from a metadata file. This metadata file should contain the 
+following columns: 1) Sample -> contains the descriptive name for each sample in the dataset, 2) 
+Condition -> contains the experimental condition for which the sample was subjected (i.e., Heat Stress, 
+DR, etc.), and 3) Label -> contains the original label provided in the counts dataset pulled from 
+GEO (or any other database). **Note:** It is important to ensure that the order of the samples (columns) 
+in the merged expression dataset is exactly the same as the order of the samples in the 'Sample' column 
+of the experiment metadata file. Changing the order will compromise the results from WGCNA.
+```{r}
+# import the experimental metadata file
+experimental_info <- read.csv('experiment_metadata.csv',header = TRUE)
+# build the design matrix from the sample and condition columns
+design <- model.matrix(Sample ~ 0 + Condition,data = experimental_info)
+# rename the columns and assign the row names
+colnames(design) <- sub('^Condition','',colnames(design))
+rownames(design) <- experimental_info$Sample
+# verify the design
+head(design)
+# write out for use in WGCNA
+write.csv(design,'design_matrix.csv')
+```
 
 
 
