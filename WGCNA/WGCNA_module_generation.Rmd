@@ -6,12 +6,12 @@ output: html_document
 ```{r setup, include=FALSE, echo=FALSE}
 # set global parameters for the file
 require("knitr")
-opts_knit$set(root.dir = "/Users/brendanwinnacott/bioinformatics/Bi610_lab/group-projects-invivo-fall-project/WGCNA")
-fig.dim <- 6
-knitr::opts_chunk$set(echo = FALSE,
-                      fig.width=2*fig.dim,
-                      fig.height=fig.dim,
-                      fig.align='center')
+opts_knit$set(root.dir = "/Users/brendanwinnacott/bioinformatics/Bi610_lab/group-projects-invivo-fall-project/WGCNA/")
+# fig.dim <- 6
+# knitr::opts_chunk$set(echo = FALSE,
+                      #fig.width=2*fig.dim,
+                      #fig.height=fig.dim,
+                      #fig.align='center')
 ```
 
 Load required packages for analysis.
@@ -34,7 +34,7 @@ Load raw expression data containing genes as rows and samples as columns.
 # set the gene ID label being used in this experiment (i.e., external_gene_name, wormbase_gene, transcript_stable_ID, etc.)
 gene_ids <- 'transcript_stable_ID'
 # read in data and set gene names as rownames
-datExpr <- read.csv("raw_wormspellGEO_transcript_stable_ID.csv",row.names = gene_ids)
+datExpr <- read.csv("raw_wormspellGEO_transcript_stable_ID.csv", row.names = gene_ids)
 datExpr$X <- NULL
 # "head" the file to preview it
 head(datExpr)
@@ -93,8 +93,11 @@ onto the new data frame 'datTraits' so even if the names are different in the fi
 code chunk will make them match.
 ```{r get trait data}
 # Create an object called "datTraits" that contains your trait data
-datTraits <- read.csv("design_matrix.csv",row.names = 1)
+datTraits <- read.csv("design_matrix.csv")
 # modify the expression data frame so that it matches the trait sample names
+rownames(datTraits) <- datTraits$X
+datTraits$X <- NULL
+# make the sample names in both the expression dataset and traits dataset match
 rownames(datExpr) <- rownames(datTraits)
 # check out the traits data
 head(datTraits)
@@ -163,7 +166,7 @@ geneTree <- flashClust(as.dist(dissTOM), method = "average")
 plot(geneTree, xlab = "", sub = "", main = "Gene Clustering on TOM-based dissimilarity", labels = FALSE, hang = 0.04)
 
 #This sets the minimum number of genes to cluster into a module
-minModuleSize <- 100
+minModuleSize <- 300
 # this function is used to build the modules
 dynamicMods <- cutreeDynamic(dendro = geneTree, distM = dissTOM, deepSplit = 2, pamRespectsDendro = FALSE, minClusterSize = minModuleSize)
 
@@ -174,7 +177,7 @@ MEs <- MEList$eigengenes
 MEDiss <- 1-cor(MEs)
 METree <- flashClust(as.dist(MEDiss), method = "average")
 
-#plots tree showing how the eigengenes cluster together
+# plots tree showing how the eigengenes cluster together
 plot(METree, main = "Clustering of module eigengenes", xlab = "", sub = "")
 ```
 
@@ -183,7 +186,7 @@ but can be changed to any value based on above eigengene dendrogram), and plot t
 with module assignment below. 
 ```{r merge similar modules}
 # set a threhold for merging modules. if merging is not desired, set the value to 0.0
-MEDissThres <- 0.25
+MEDissThres <- 0
 merge <- mergeCloseModules(datExpr, dynamicColors, cutHeight = MEDissThres, verbose = 3)
 mergedColors <- merge$colors
 mergedMEs <- merge$newMEs
@@ -215,7 +218,8 @@ moduleTraitPvalue <- corPvalueStudent(moduleTraitCor, nSamples)
 textMatrix <- paste(signif(moduleTraitCor, 2), "\n(", 
                     signif(moduleTraitPvalue, 1), ")", sep = "")
 dim(textMatrix) <- dim(moduleTraitCor)
-par(mar = c(6, 8.5, 3, 3))
+par(mar = c(7, 10, 3, 3))
+tiff('module_trait_relationship.tif',width=6,height=4,units='in',res = 300)
 # display the corelation values with a heatmap plot
 labeledHeatmap(Matrix = moduleTraitCor, 
                xLabels = names(datTraits), 
@@ -224,23 +228,27 @@ labeledHeatmap(Matrix = moduleTraitCor,
                colorLabels = FALSE, 
                colors = blueWhiteRed(50), 
                textMatrix = textMatrix, 
+               xLabelsAngle = 90,
                setStdMargins = FALSE, 
-               cex.text = 0.6, 
+               cex.lab = 0.35,
+               cex.text = 0.25, 
                zlim = c(-1,1), 
                main = "Module-trait relationships")
+dev.off()
 ```
 
 Pull out the interesting modules and the traits they correlate to for downstream analysis. 
 ```{r get interesting modules}
 # set a correlation threshold for selecting interesting modules and the traits they highly correlate to
-corThreshold <- 0.75
+corThreshold <- 0.77
 # get the module colors and trait names
-indexes <- which(abs(moduleTraitCor) >= corThreshold,arr.ind = TRUE)
-modules <- row.names(moduleTraitCor[indexes[,1],])
-traits <- colnames(moduleTraitCor[,indexes[,2]])
+indexes <- which(abs(moduleTraitCor) >= corThreshold, arr.ind = TRUE)
+modules <- rownames(indexes)
+traits <- colnames(moduleTraitCor[,indexes[,2],drop=FALSE])
+modules
 ```
 
-Save the module and trait information.
+Save the module and trait information for identifying interesting genes and pathways.
 ```{r save module information}
 # save the module information for downstream analysis
 save(MEs, modules, traits, file = "module_information.RData")
