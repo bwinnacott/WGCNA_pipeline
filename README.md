@@ -9,9 +9,9 @@ This pipeline utilizes *C. elegans* gene expression data to perform a network an
 
 ## Table of contents
 
-1. [Hardware/Software Requirements](#Hardware_&_Software_Requirements)
-2. 
-3.
+1. [Hardware & Software Requirements](#Hardware_&_Software_Requirements)
+2. [Input Data](#Input data)
+3.[Data pre-processing](#Dat
 4.
 
 
@@ -20,8 +20,9 @@ This pipeline utilizes *C. elegans* gene expression data to perform a network an
 
 
 ## Hardware_&_Software_Requirements
-
-
-
-
-
+## Input data
+## 
+## 
+## 
+## 
+## 
