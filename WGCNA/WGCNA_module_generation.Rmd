@@ -7,8 +7,8 @@ output: html_document
 # set global parameters for the file
 require("knitr")
 opts_knit$set(root.dir = "/Users/brendanwinnacott/bioinformatics/Bi610_lab/group-projects-invivo-fall-project/WGCNA/")
- fig.dim <- 6
- knitr::opts_chunk$set(echo = FALSE,
+fig.dim <- 6
+knitr::opts_chunk$set(echo = FALSE,
                       fig.width=2*fig.dim,
                       fig.height=fig.dim,
                       fig.align='center')
@@ -205,8 +205,8 @@ moduleTraitPvalue <- corPvalueStudent(moduleTraitCor, nSamples)
 textMatrix <- paste(signif(moduleTraitCor, 2), "\n(", 
                     signif(moduleTraitPvalue, 1), ")", sep = "")
 dim(textMatrix) <- dim(moduleTraitCor)
-par(mar = c(7, 10, 3, 3))
-# tiff('module_trait_relationship.tif',width=6,height=4,units='in',res = 300)
+par(mar = c(10, 10, 4, 1))
+# tiff('module_trait_relationship.tif',width=6,height=5,units='in',res = 300)
 # display the corelation values with a heatmap plot
 labeledHeatmap(Matrix = moduleTraitCor, 
                xLabels = names(datTraits), 
@@ -214,7 +214,9 @@ labeledHeatmap(Matrix = moduleTraitCor,
                ySymbols = names(MEs), 
                colorLabels = FALSE, 
                colors = blueWhiteRed(50), 
-               textMatrix = textMatrix, 
+               textMatrix = textMatrix,
+               cex.lab.x = 0.4,
+               cex.lab.y = 0.4,
                xLabelsAngle = 90,
                setStdMargins = FALSE, 
                cex.lab = 0.9,
@@ -227,7 +229,7 @@ labeledHeatmap(Matrix = moduleTraitCor,
 Pull out the interesting modules and the traits they correlate to for downstream analysis.  
 ```{r get interesting modules}
 # set a correlation threshold for selecting interesting modules and the traits they highly correlate to
-corThreshold <- 0.77
+corThreshold <- 0.75
 # get the module colors and trait names
 indexes <- which(abs(moduleTraitCor) >= corThreshold, arr.ind = TRUE)
 modules <- rownames(indexes)
