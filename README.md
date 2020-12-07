@@ -52,9 +52,9 @@ Each dataset could have a unique format and require a hands-on approach to confo
 
 ## Glossary
 
-- Module: A cluster of highly interconnected genes 
-- Eigengene: The first principle component of a module. This gene is representative of the gene expression profiles within its module 
-- Module Membership: A metric of correlation between a given gene and its module's eigengene 
-- Gene Significance: A metric of biological significance of a given gene to its pathway 
-- Hub Gene: A highly connected gene 
-- Trait: Experimental condition. Can represent a pool of biological replicates
+* Module: A cluster of highly interconnected genes 
+* Eigengene: The first principle component of a module. This gene is representative of the gene expression profiles within its module 
+* Module Membership: A metric of correlation between a given gene and its module's eigengene 
+* Gene Significance: A metric of biological significance of a given gene to its pathway 
+* Hub Gene: A highly connected gene 
+* Trait: Experimental condition. Can represent a pool of biological replicates
