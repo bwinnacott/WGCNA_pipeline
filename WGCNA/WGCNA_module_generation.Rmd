@@ -34,23 +34,10 @@ Load raw expression data containing genes as rows and samples as columns.
 # set the gene ID label being used in this experiment (i.e., external_gene_name, wormbase_gene, transcript_stable_ID, etc.)
 gene_ids <- 'transcript_stable_ID'
 # read in data and set gene names as rownames
-datExpr <- read.csv("raw_wormspellGEO_transcript_stable_ID.csv", row.names = gene_ids)
+datExpr <- read.csv("TPM_wormspellGEO_transcript_stable_ID.csv", row.names = gene_ids)
 datExpr$X <- NULL
 # "head" the file to preview it
 head(datExpr)
-```
-
-Normalize the raw gene counts using edgeR's 'calcNormFactors' function.
-```{r edgeR normalization}
-# now normalize the raw count data
-norm.er <- DGEList(counts = datExpr)
-norm.er <- calcNormFactors(norm.er)
-datExpr <- cpm(norm.er)
-# create function for log transformation
-# log_transform <- function(x) {
-#  log2(x+1)
-# }
-# new <- apply(datExpr,MARGIN=2,FUN=log_transform)
 ```
 
 Modify the expression data so it is compatible with WGCNA processing (i.e., transpose dataframe 
@@ -240,7 +227,7 @@ labeledHeatmap(Matrix = moduleTraitCor,
 Pull out the interesting modules and the traits they correlate to for downstream analysis.  
 ```{r get interesting modules}
 # set a correlation threshold for selecting interesting modules and the traits they highly correlate to
-corThreshold <- 0.75
+corThreshold <- 0.77
 # get the module colors and trait names
 indexes <- which(abs(moduleTraitCor) >= corThreshold, arr.ind = TRUE)
 modules <- rownames(indexes)

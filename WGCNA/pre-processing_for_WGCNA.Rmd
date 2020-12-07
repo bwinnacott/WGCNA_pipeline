@@ -102,14 +102,14 @@ Comment back in for writing out raw counts
 
 ```{r TPM normalization}
 # get length data
-length_data <- read.table("~/bioinformatics/group-projects-invivo-fall-project/BGMP_IVB_2020_dataset/GC_lengths.tsv",
+length_data <- read.table("../BGMP_IVB_2020_dataset/GC_lengths.tsv",
                           header = TRUE, sep="\t", check.names = FALSE)
 length_data <- length_data[!(rownames(length_data) %in% rrna),]   # remove rRNA genes from length data
 length_data$Length <- as.numeric(length_data$Length)
 length_data$Length_kb <- length_data$Length / 1000   # store length in kb
 
 # convert length data IDs
-ID_table <- read.csv("~/bioinformatics/group-projects-invivo-fall-project/Cleaned_Datasets_transcript_stableID/celegans_cleaned_mart_ensembl.102.tsv", sep = "\t")
+ID_table <- read.csv("../Cleaned_Datasets_transcript_stableID/celegans_cleaned_mart_ensembl.102.tsv", sep = "\t")
 length_data <- rownames_to_column(length_data, var = "Gene.stable.ID")
 lengthdata_converted <- merge(length_data, ID_table, by="Gene.stable.ID", all.x = FALSE, all.y = FALSE)
 lengthdata_converted <- lengthdata_converted %>%
@@ -132,7 +132,7 @@ tmp_withLogtrans
 
 Write out TPM normalized counts
 ```{r write out merged raw counts}
-setwd("~/bioinformatics/group-projects-invivo-fall-project/WGCNA/")
+setwd("../group-projects-invivo-fall-project/WGCNA/")
 
 writeout <- rownames_to_column(merged_final_no_rRNA, var = "transcript_stable_ID")
 write.csv(writeout, "TPM_wormspellGEO_transcript_stable_ID.csv")
