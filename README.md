@@ -26,15 +26,20 @@ This pipeline utilizes *C. elegans* gene expression data to perform a network an
 
 #### Hardware
 System memory: 32 GB minimum
-Memory usage increases with size of input datasets
+Memory usage increases with size and number of input datasets, WGCNA parameters
 #### Software
 R/4.0.2
 Rstudio 1.0 or newer
-MacOS (Currently pipeline is **inoperable** on Linux/Windows based machines)
+OSX (Currently, pipeline appears **inoperable** on Linux/Windows based machines)
 
+Clone all files from github repo:
+
+> https://github.com/2020-bgmp/group-projects-invivo-fall-project/
 ## Input data
-A minimum of 15 samples is recommended for WGCNA. Therefore, if you have N experimental samples, you must find 15-N samples from 
+A minimum of 15 samples is recommended for WGCNA. Therefore, if you have N experimental samples, you must find 15-N samples from public databases.
 ## Data_Cleanup
+
+
 ## Data_Pre-Processing
 ## Running_WGCNA
 ## GO_Module_Enrichment
