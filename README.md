@@ -49,7 +49,7 @@ To merge datasets, remove rRNA genes, and create the design matrix, follow the [
 
 ## Running_WGCNA
 
-To generate co-expression modules using WGCNA, follow the [WGCNA module generation tutorial](https://github.com/2020-bgmp/group-projects-invivo-fall-project/blob/master/WGCNA/WGCNA_module_generation.Rmd). Make sure to adjust the following parameters to suit the needs of your analysis:
+To generate co-expression modules using WGCNA, follow the [WGCNA Module Generation Tutorial](https://github.com/2020-bgmp/group-projects-invivo-fall-project/blob/master/WGCNA/WGCNA_module_generation.Rmd). Make sure to adjust the following parameters to suit the needs of your analysis:
 
 Parameter Name | Explanation
 ------------ | -------------
@@ -61,6 +61,7 @@ CorThreshold | Correlation threshold for selecting modules with a minimum of thi
 
 
 ## GO_Module_Enrichment
+For functional annotation, follow the [GO Module Enrichment Tutorial](https://github.com/2020-bgmp/group-projects-invivo-fall-project/blob/master/WGCNA/GO_module_enrichment.Rmd)
 
 ## Glossary
 
