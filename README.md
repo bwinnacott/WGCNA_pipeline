@@ -53,11 +53,11 @@ To generate co-expression modules using WGCNA, follow the [WGCNA module generati
 
 Parameter Name | Explanation
 ------------ | -------------
-* gene_ids  |  Gene naming convention used in expression data. Can be external_gene_name, wormbase_gene, transcript_stable_ID, etc.
-* softPower | Threshold of correlation. Set to the lowest value that exceeds 0.9 on the scale-free topology index (scale independence plot)
-* minModuleSize | Minimum number of genes per module. Vary to adjust number of modules generated
-* MEDissThres | Merging threshold. This value "cuts" the branches of the module tree (METree) at the specified value. Any branches below this value will be merged. Useful for removing redundant/similar modules
-* CorThreshold | Correlation threshold for selecting modules with a minimum of this correlation value for further analysis
+gene_ids  |  Gene naming convention used in expression data. Can be external_gene_name, wormbase_gene, transcript_stable_ID, etc.
+softPower | Threshold of correlation. Set to the lowest value that exceeds 0.9 on the scale-free topology index (scale independence plot)
+minModuleSize | Minimum number of genes per module. Vary to adjust number of modules generated
+MEDissThres | Merging threshold. This value "cuts" the branches of the module tree (METree) at the specified value. Any branches below this value will be merged. Useful for removing redundant/similar modules
+CorThreshold | Correlation threshold for selecting modules with a minimum of this correlation value for further analysis
 
 
 ## GO_Module_Enrichment
