@@ -34,25 +34,32 @@ OSX (Currently, pipeline appears **inoperable** on Linux/Windows based machines)
 
 Clone all files from github repo:
 
-> https://github.com/2020-bgmp/group-projects-invivo-fall-project/
+> git clone https://github.com/2020-bgmp/group-projects-invivo-fall-project/ 
+
 ## Input data
 A minimum of 15 samples is recommended for WGCNA. Therefore, if you have N experimental samples, you must find 15-N samples from public databases.
-## Data_Cleanup
 
+## Data_Cleanup
+Fully cleaned and prepped datasets will be provided on Google Drive for a basic analysis. For the incorporation of new literature datasets, follow the [Dataset_Cleanup_Tutorial.Rmd](https://github.com/2020-bgmp/group-projects-invivo-fall-project/blob/master/dataset_cleanup_tutorial/Dataset_Cleanup_Tutorial.Rmd) instructions. 
+
+Each dataset could have a unique format and require a hands-on approach to conform to the structure of existing data. Irregularities in gene naming conventions, gene number, and data frame structure can all lead to incompatibility of datasets for WGCNA. 
 
 ## Data_Pre-Processing
+
 ## Running_WGCNA
+
 ## GO_Module_Enrichment
+
 ## Glossary
 
-Module: A cluster of highly interconnected genes \
+- Module: A cluster of highly interconnected genes 
 
-Eigengene: The first principle component of a module. This gene is representative of the gene expression profiles within its module \
+- Eigengene: The first principle component of a module. This gene is representative of the gene expression profiles within its module 
 
-Module Membership: A metric of correlation between a given gene and its module's eigengene \
+- Module Membership: A metric of correlation between a given gene and its module's eigengene 
 
-Gene Significance: A metric of biological significance of a given gene to its pathway \
+- Gene Significance: A metric of biological significance of a given gene to its pathway 
 
-Hub Gene: A highly connected gene \
+- Hub Gene: A highly connected gene 
 
 Trait: Experimental condition. Can represent a pool of biological replicates
