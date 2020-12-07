@@ -10,9 +10,12 @@ This pipeline utilizes *C. elegans* gene expression data to perform a network an
 ## Table of contents
 
 1. [Hardware & Software Requirements](#Hardware_&_Software_Requirements)
-2. [Input Data](#Input data)
-3.[Data pre-processing](#Dat
-4.
+2. [Input Data](#Input_Data)
+3. [Data Cleanup](#Data_Cleanup)
+4. [Data Pre-processing](#Data_Pre-Processing)
+5. [Running WGCNA](#Running_WGCNA)
+6. [GO Module Enrichment](#GO_Module_Enrichment)
+7. [Glossary](#Glossary)
 
 
 
@@ -20,9 +23,31 @@ This pipeline utilizes *C. elegans* gene expression data to perform a network an
 
 
 ## Hardware_&_Software_Requirements
+
+#### Hardware
+System memory: 32 GB minimum
+Memory usage increases with size of input datasets
+#### Software
+R/4.0.2
+Rstudio 1.0 or newer
+MacOS (Currently pipeline is **inoperable** on Linux/Windows based machines)
+
 ## Input data
-## 
-## 
-## 
-## 
-## 
+A minimum of 15 samples is recommended for WGCNA. Therefore, if you have N experimental samples, you must find 15-N samples from 
+## Data_Cleanup
+## Data_Pre-Processing
+## Running_WGCNA
+## GO_Module_Enrichment
+## Glossary
+
+Module: A cluster of highly interconnected genes \
+
+Eigengene: The first principle component of a module. This gene is representative of the gene expression profiles within its module \
+
+Module Membership: A metric of correlation between a given gene and its module's eigengene \
+
+Gene Significance: A metric of biological significance of a given gene to its pathway \
+
+Hub Gene: A highly connected gene \
+
+Trait: Experimental condition. Can represent a pool of biological replicates
