@@ -7,7 +7,7 @@ Set appropriate working directory.
 ```{r setup, include=FALSE}
 # sets the working directory for the entire notebook
 # change to directory where repo is located if necessary
-knitr::opts_knit$set(root.dir = '/Users/brendanwinnacott/bioinformatics/Bi610_lab/group-projects-invivo-fall-project/WGCNA/')
+knitr::opts_knit$set(root.dir = '.')
 options(stringsAsFactors = FALSE)
 fig.dim <- 6
 knitr::opts_chunk$set(echo = FALSE,
@@ -32,6 +32,7 @@ library(GO.db)
 library(topGO)
 library(VennDiagram)
 library(wormcat)
+library(plotflow)
 # load the gene expression and condition data
 data <- load(file = 'expression_trait_data.RData')
 # load the network data
@@ -49,7 +50,7 @@ modules
 the results (gene information as well as GO term enrichment). To run more than one condition, 
 assign the 'condition' variable in the below code chunk to any of the conditions listed in the 
 output above and rerun the script. The setup as is (for both the WGCNA script and this one) 
-shows the 'darkgreen' module to correlate highly to the 'Group_C' treatment condition. For the 
+shows the 'midnightblue' module to correlate highly to the 'Group_C' treatment condition. For the 
 purpose of demonstration, this trait and module are used in the following analysis. 
 
 Get the total number of samples, genes, and modules in the dataset. Assign the experimental 
@@ -178,7 +179,7 @@ head(geneInfo)
 ```
 
 Write out gene information table.
-```{r}
+```{r, warning=FALSE}
 # set the working directory to match that created in the beginning of the script
 setwd(sprintf('%s_%s_module',condition,modules[match(condition,traits)]))
 # write out the results
@@ -237,10 +238,9 @@ names(final_genes) <- all_genes
 str(final_genes)
 ```
 
-**Create topGO class objects for each of the three GO ontologies**  
-These class objects are used for term enrichment analysis. The three ontologies 
-associated with GO are biological process (BP), cellular component (CC), and molecular 
-function (MF).
+Create topGO class objects for each of the three GO ontologies. These class objects are used 
+for term enrichment analysis. The three ontologies associated with GO are biological process (BP), 
+cellular component (CC), and molecular function (MF).
 ```{r topGO object, message=FALSE}
 # generate topGO object for analysis of the biological process (BP) ontology; using annotation 
 # function 'annFUN.gene2GO' due to mappings being provided; if mappings were not provided by user, 
@@ -318,27 +318,25 @@ classic_fisher_result_mf <- runTest(geneID2GO_mf, algorithm = 'classic', statist
 weight_fisher_result_mf <- runTest(geneID2GO_mf, algorithm = 'weight01', statistic = 'fisher') 
 ```
 
-Create summary tables for the enrichment test results.
+Create summary tables for the enrichment test results (top 20 terms).
 ```{r}
 # generate a summary table of the enrichment results for 'BP' ontology; store the top 20 results based on the weighted test
-enrich_results_bp <- GenTable(geneID2GO_bp, classic = classic_fisher_result_bp, weight = weight_fisher_result_bp, orderBy = 'weight', ranksOf = 'classic', topNodes = 20)  # if all terms are desired in the table, pass 
-                                               # length(genesInTerm(geneID2GO)) to 'topNodes'
+enrich_results_bp <- GenTable(geneID2GO_bp, classic = classic_fisher_result_bp, weight = weight_fisher_result_bp, orderBy = 'weight', ranksOf = 'classic', topNodes = 20)  # if all terms are desired in the table, pass length(genesInTerm(geneID2GO)) to 'topNodes'
 # display the first few terms
 head(enrich_results_bp)
 
 # generate a summary table of the enrichment results for 'CC' ontology; store the top 20 results based on the weighted test
-enrich_results_cc <- GenTable(geneID2GO_cc, classic = classic_fisher_result_cc, weight = weight_fisher_result_cc, orderBy = 'weight', ranksOf = 'classic', topNodes = 20)  # if all terms are desired in the table, pass 
-                                               # length(genesInTerm(geneID2GO)) to 'topNodes'
+enrich_results_cc <- GenTable(geneID2GO_cc, classic = classic_fisher_result_cc, weight = weight_fisher_result_cc, orderBy = 'weight', ranksOf = 'classic', topNodes = 20)  # if all terms are desired in the table, pass length(genesInTerm(geneID2GO)) to 'topNodes'
 # display the first few terms
 head(enrich_results_cc)
 
 # generate a summary table of the enrichment results for 'MF' ontology; store the top 20 results based on the weighted test
-enrich_results_mf <- GenTable(geneID2GO_mf, classic = classic_fisher_result_mf, weight = weight_fisher_result_mf, orderBy = 'weight', ranksOf = 'classic', topNodes = 20)  # if all terms are desired in the table, pass 
-                                               # length(genesInTerm(geneID2GO)) to 'topNodes'
+enrich_results_mf <- GenTable(geneID2GO_mf, classic = classic_fisher_result_mf, weight = weight_fisher_result_mf, orderBy = 'weight', ranksOf = 'classic', topNodes = 20)  # if all terms are desired in the table, pass length(genesInTerm(geneID2GO)) to 'topNodes'
 # display the first few terms
 head(enrich_results_mf)
 ```
 
+This gets rid of characters returned for the p-value that would disrupt correct filtering. 
 ```{r}
 # remove any potential '<' signs that show up when the p-value returned is less than 1e-30. This 
 # term will be removed when filtering by p-value, so this character needs to be accounted for
@@ -350,10 +348,10 @@ enrich_results_mf$classic <- gsub('< ','',enrich_results_mf$classic)
 enrich_results_mf$weight <- gsub('< ','',enrich_results_mf$weight)
 ```
 
-**Add FDR correct p-value column to each results table**  
-The adjusted statistic is computed from the classic p-values due to multiple testing correction 
-for the weighted algorithm being a bit less robust/necessary (non-independent testing). The weighted 
-p-values are considered corrected for the purposes of this analysis. 
+Add FDR correct p-value column to each results table. The adjusted statistic is computed from the 
+classic p-values due to multiple testing correction for the weighted algorithm being a bit less 
+robust/necessary (non-independent testing). The weighted p-values are considered corrected for the 
+purposes of this analysis. 
 ```{r, warning=FALSE}
 # produce a column containing the bonferroni corrected weighted values (FDR corrected) for each of the above tables
 # for some reason the p-values are reported as string, not numeric
@@ -366,7 +364,7 @@ enrich_results_cc$adj_pval_classic <- p.adjust(enrich_results_cc$classic,method 
 enrich_results_mf$adj_pval_classic <- p.adjust(enrich_results_mf$classic,method = 'fdr',n = nrow(enrich_results_mf))
 ```
 
-**Select enriched terms with a FDR corrected p-value below 0.05**  
+Select enriched terms with a FDR corrected p-value below 0.05. 
 ```{r}
 # for each ontology results table, get all terms that are enriched at an adjusted p-value threshold (i.e., 0.05)
 results_adjp_bp <- subset(enrich_results_bp,adj_pval_classic <= 0.05)
@@ -395,7 +393,7 @@ barplot(-log(ordered_frame$adj_pval_classic),
 title(ylab = 'GO Terms - Biological Process',mgp = c(18,1,0))
 ```
 
-**Get all genes and significant genes associated with statistically enriched terms**  
+Get all genes and significant genes associated with statistically enriched terms.
 ```{r}
 # get all genes that are associated with an enriched term; perform for each ontology
 GO_genes_bp <- genesInTerm(geneID2GO_bp)
@@ -407,7 +405,7 @@ sig_genes_cc <- sigGenes(geneID2GO_cc)
 sig_genes_mf <- sigGenes(geneID2GO_mf)
 ```
 
-**Add the significant gene IDs to each results table as a column**  
+Add the significant gene IDs to each results table as a column.
 ```{r}
 # add list of significant genes associated with significantly enriched GO terms to each table above as separate column
 results_adjp_bp$Significant_Genes <- sapply(results_adjp_bp$GO.ID, function(x){
@@ -424,8 +422,8 @@ results_adjp_mf$Significant_Genes <- sapply(results_adjp_mf$GO.ID, function(x){
 })
 ```
 
-**Reformat significant gene IDs column so tables can be written out as csv**  
-The gene IDs are added as a comma separated list, for use in further analyses if desired.
+Reformat significant gene IDs column so tables can be written out as csv. The gene IDs are 
+added as a comma separated list, for use in further analyses if desired.
 ```{r}
 # reformat the data in the significant gene list column just created; do so for each ontology's results table
 if (nrow(results_adjp_bp) > 0) {
@@ -450,8 +448,8 @@ results_adjp_cc$Significant_Genes <- as.character(results_adjp_cc$Significant_Ge
 results_adjp_mf$Significant_Genes <- as.character(results_adjp_mf$Significant_Genes)
 ```
 
-**Write out enrichment results for each GO ontology category to csv**  
-```{r}
+Write out enrichment results for each GO ontology category to csv.
+```{r, warning=FALSE}
 # set the working directory to match that created in the beginning of the script
 setwd(sprintf('%s_%s_module',condition,modules[match(condition,traits)]))
 # write the results out to a tsv file for each ontology
@@ -468,7 +466,22 @@ if (nrow(results_adjp_mf) > 0) {
 
 ### Wormcat Term Enrichment Analysis
 
+Perform Wormcat's functional category enrichment analysis to see if any significantly enriched 
+categories are identified that are different from GO. This outputs a new directory containing a 
+set of results files within the directory created for this condition/module analysis.
+```{r, warning=FALSE}
+# again, set the working directory to match that created in the beginning of the script
+setwd(sprintf('%s_%s_module',condition,modules[match(condition,traits)]))
+# extract the wormbase IDs for the genes found in the current module
+module_WB_ids <- geneInfo$Wormbase_ID
+# add 'Wormbase.ID' to the beginning of the vector
+module_WB_ids <- c("Wormbase.ID", module_WB_ids)
+# write out list of WB gene IDs for Wormcat input
+writeLines(module_WB_ids,con = 'module_ids_wormcat.csv')
 
+# run WormCat
+worm_cat_fun('module_ids_wormcat.csv',annotation_file = 'whole_genome_jul-03-2019.csv',input_type = 'Wormbase.ID')
+```
 
 
 

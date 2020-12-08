@@ -6,7 +6,7 @@ output: html_document
 ```{r setup, include=FALSE, echo=FALSE}
 # set global parameters for the file
 require("knitr")
-opts_knit$set(root.dir = "/Users/brendanwinnacott/bioinformatics/Bi610_lab/group-projects-invivo-fall-project/WGCNA/")
+opts_knit$set(root.dir = ".")
 fig.dim <- 6
 knitr::opts_chunk$set(echo = FALSE,
                       fig.width=2*fig.dim,
@@ -205,7 +205,7 @@ moduleTraitPvalue <- corPvalueStudent(moduleTraitCor, nSamples)
 textMatrix <- paste(signif(moduleTraitCor, 2), "\n(", 
                     signif(moduleTraitPvalue, 1), ")", sep = "")
 dim(textMatrix) <- dim(moduleTraitCor)
-par(mar = c(10, 10, 4, 1))
+# par(mar = c(10, 10, 4, 1))
 # tiff('module_trait_relationship.tif',width=6,height=5,units='in',res = 300)
 # display the corelation values with a heatmap plot
 labeledHeatmap(Matrix = moduleTraitCor, 
@@ -215,8 +215,8 @@ labeledHeatmap(Matrix = moduleTraitCor,
                colorLabels = FALSE, 
                colors = blueWhiteRed(50), 
                textMatrix = textMatrix,
-               cex.lab.x = 0.4,
-               cex.lab.y = 0.4,
+               cex.lab.x = 0.6,
+               cex.lab.y = 0.6,
                xLabelsAngle = 90,
                setStdMargins = FALSE, 
                cex.lab = 0.9,
