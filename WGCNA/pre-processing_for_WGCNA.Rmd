@@ -5,6 +5,10 @@ output: html_document
 
 This script is for merging cleaned datasets (see Dataset_Cleanup_Tutorial.Rmd for cleanup information), removing rRNA genes, normalization, and creating the design matrix.
 
+```{r set directory}
+knitr::opts_knit$set(root.dir = '~/bioinformatics/group-projects-invivo-fall-project/WGCNA')
+```
+
 ```{r}
 library(tidyverse)
 ```
@@ -28,11 +32,11 @@ head(GSE.49662_transcr)
 head(GSE.46051_transcr)
 head(GSE.54853_transcr)
 head(invivo_transcr)
-dim(GSE.54853_transcr)
-dim(GSE.49662_transcr)
-dim(GSE.46051_transcr)
-dim(GSE.54853_transcr)
-dim(invivo_transcr)
+sprintf("number of genes: %i, number of samples: %i", nrow(GSE.54853_transcr), (ncol(GSE.54853_transcr)-1))
+sprintf("number of genes: %i, number of samples: %i", nrow(GSE.49662_transcr), (ncol(GSE.49662_transcr)-1))
+sprintf("number of genes: %i, number of samples: %i", nrow(GSE.46051_transcr), (ncol(GSE.46051_transcr)-1))
+sprintf("number of genes: %i, number of samples: %i", nrow(GSE.54853_transcr), (ncol(GSE.54853_transcr)-1))
+sprintf("number of genes: %i, number of samples: %i", nrow(invivo_transcr), (ncol(invivo_transcr)-1))
 ```
 
 This chunk merges the datasets. Put the first 2 datasets in the first function, then incorporate next dataset with the previously merged dataset.
@@ -48,6 +52,7 @@ merged_final[,1] <- NULL
 
 # check merge
 merged_final
+sprintf("number of genes: %i, number of samples: %i", nrow(merged_final), (ncol(merged_final)-1))
 ```
 
 Remove known rRNA genes
@@ -87,10 +92,12 @@ knitr::kable(rrna_counts, caption = "Raw rRNA Counts")
 # remove rRNA counts
 merged_final_no_rRNA <- merged_final[!(rownames(merged_final) %in% rrna),]
 merged_final_no_rRNA
+
+sprintf("number of genes conserved after rRNA removal: %i", nrow(merged_final_no_rRNA))
 ```
 
 Comment back in for writing out raw counts
-<!-- Write out raw counts  -->
+<!-- Write out raw counts -->
 <!-- ```{r write out merged raw counts} -->
 <!-- setwd("~/bioinformatics/group-projects-invivo-fall-project/WGCNA/") -->
 
@@ -132,7 +139,7 @@ tmp_withLogtrans
 
 Write out TPM normalized counts
 ```{r write out merged raw counts}
-setwd("../group-projects-invivo-fall-project/WGCNA/")
+setwd("~/bioinformatics/group-projects-invivo-fall-project/WGCNA/")
 
 writeout <- rownames_to_column(merged_final_no_rRNA, var = "transcript_stable_ID")
 write.csv(writeout, "TPM_wormspellGEO_transcript_stable_ID.csv")
