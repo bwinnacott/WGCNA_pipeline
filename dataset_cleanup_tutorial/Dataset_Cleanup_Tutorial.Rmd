@@ -20,7 +20,7 @@ Set working directory
 
 **Change directory paths as needed throughout script**
 ```{r set directory}
-knitr::opts_knit$set(root.dir = '~/bioinformatics/group-projects-invivo-fall-project/dataset_cleanup_tutorial/')
+knitr::opts_knit$set(root.dir = '.')
 ```
 
 Load libraries

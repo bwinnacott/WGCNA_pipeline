@@ -5,7 +5,7 @@ output: html_document
 
 Set working directory
 ```{r set directory}
-knitr::opts_knit$set(root.dir = '~/bioinformatics/group-projects-invivo-fall-project/Cleaned_Datasets_transcript_stableID/')
+knitr::opts_knit$set(root.dir = '.')
 knitr::opts_chunk$set(results = 'hide')
 ```
 

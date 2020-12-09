@@ -6,7 +6,7 @@ output: html_document
 This script is for merging cleaned datasets (see Dataset_Cleanup_Tutorial.Rmd for cleanup information), removing rRNA genes, normalization, and creating the design matrix.
 
 ```{r set directory}
-knitr::opts_knit$set(root.dir = '~/bioinformatics/group-projects-invivo-fall-project/WGCNA')
+knitr::opts_knit$set(root.dir = ".")
 ```
 
 ```{r}
