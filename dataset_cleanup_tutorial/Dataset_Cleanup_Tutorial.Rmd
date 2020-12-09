@@ -9,7 +9,7 @@ output:
 **This script is a guide for uniformly formatting datasets for Weighted Gene Co-expression Network Analysis (WGCNA)**
 The examples in this tutorial will be from GEO datasets GSE156037, GSE41205, GSE63528, and GSE54853. 
 Each dataset presents a slightly different cleanup challenge.
-- GSE156037 -- convert to gene stable IDs to transcript stable IDs
+- GSE156037 -- convert from gene stable IDs to transcript stable IDs
 - GSE41205 -- merge 2 samples with different number of genes, select only the counts columns
 - GSE63528 -- merge 5 samples with same number of genes, select only the counts columns
 - GSE46257 -- convert gene names to transcript stable IDs, select only counts columns
@@ -20,7 +20,7 @@ Set working directory
 
 **Change directory paths as needed throughout script**
 ```{r set directory}
-knitr::opts_knit$set(root.dir = '~/bioinformatics/group-projects-invivo-fall-project/')
+knitr::opts_knit$set(root.dir = '~/bioinformatics/group-projects-invivo-fall-project/dataset_cleanup_tutorial/')
 ```
 
 Load libraries
@@ -39,8 +39,7 @@ To read in tsv files, use `read.delim("file", sep="\t")`. Note, the functions re
 For each dataset check what kind of ID there is, if there are other columns besides raw gene counts, and the initial number of genes. Many of the GEO datasets selected have Transcript Stable IDs (F07C3.7) but some have Gene Stable IDs (WBGene00000003) or Gene Names (aat-2). Converting to Transcript Stable IDs conserved the most information so that is what this script will do.
 
 ```{r GSE156037 csv, results='hold'}
-setwd("~/bioinformatics/group-projects-invivo-fall-project/")
-GSE.156037 <- read.csv("Selected_GEO_datasets_raw/GSE156037_raw_counts.csv")
+GSE.156037 <- read.csv("../Selected_GEO_datasets_raw/GSE156037_raw_counts.csv")
 
 # check what kind of IDs, if there are other columns besides raw counts, and number of genes
 print(head(GSE.156037))
@@ -48,10 +47,9 @@ sprintf("initial number of genes: %i", nrow(GSE.156037))
 ```
 
 ```{r GSE41205 tsv, results='hold'}
-setwd("~/bioinformatics/group-projects-invivo-fall-project/")
-GSE.41205_N2 <- read.delim("Selected_GEO_datasets_raw/GSE41205_Paul_2012_MAPK/GSM1010460_N2genes.txt", 
+GSE.41205_N2 <- read.delim("../Selected_GEO_datasets_raw/GSE41205_Paul_2012_MAPK/GSM1010460_N2genes.txt", 
                                 sep = "\t")
-GSE.41205_KU25 <- read.delim("Selected_GEO_datasets_raw/GSE41205_Paul_2012_MAPK/GSM1010461_KU25genes.txt", 
+GSE.41205_KU25 <- read.delim("../Selected_GEO_datasets_raw/GSE41205_Paul_2012_MAPK/GSM1010461_KU25genes.txt", 
                                   sep = "\t")
 
 print(head(GSE.41205_N2))
@@ -61,16 +59,15 @@ sprintf("initial number of genes: %i", nrow(GSE.41205_KU25))
 ```
 
 ```{r GSE63528 tsv, results='hold'}
-setwd("~/bioinformatics/group-projects-invivo-fall-project/")
-GSE.63528_1 <- read.delim("Selected_GEO_datasets_raw/GSE63528_Rangaraju_2016/GSM1551786_Sample_1_processed_data.txt", 
+GSE.63528_1 <- read.delim("../Selected_GEO_datasets_raw/GSE63528_Rangaraju_2016/GSM1551786_Sample_1_processed_data.txt", 
                           sep = "\t", row.names = 1)
-GSE.63528_2 <- read.delim("Selected_GEO_datasets_raw/GSE63528_Rangaraju_2016/GSM1551787_Sample_2_processed_data.txt", 
+GSE.63528_2 <- read.delim("../Selected_GEO_datasets_raw/GSE63528_Rangaraju_2016/GSM1551787_Sample_2_processed_data.txt", 
                           sep = "\t", row.names = 1)
-GSE.63528_3 <- read.delim("Selected_GEO_datasets_raw/GSE63528_Rangaraju_2016/GSM1551788_Sample_3_processed_data.txt", 
+GSE.63528_3 <- read.delim("../Selected_GEO_datasets_raw/GSE63528_Rangaraju_2016/GSM1551788_Sample_3_processed_data.txt", 
                           sep = "\t", row.names = 1)
-GSE.63528_4 <- read.delim("Selected_GEO_datasets_raw/GSE63528_Rangaraju_2016/GSM1551789_Sample_4_processed_data.txt", 
+GSE.63528_4 <- read.delim("../Selected_GEO_datasets_raw/GSE63528_Rangaraju_2016/GSM1551789_Sample_4_processed_data.txt", 
                           sep = "\t", row.names = 1)
-GSE.63528_5 <- read.delim("Selected_GEO_datasets_raw/GSE63528_Rangaraju_2016/GSM1551790_Sample_5_processed_data.txt", 
+GSE.63528_5 <- read.delim("../Selected_GEO_datasets_raw/GSE63528_Rangaraju_2016/GSM1551790_Sample_5_processed_data.txt", 
                           sep = "\t", row.names = 1)
 
 print(head(GSE.63528_1))
@@ -86,8 +83,7 @@ sprintf("initial number of genes: %i", nrow(GSE.63528_5))
 ```
 
 ```{r GSE46257 xls, results='hold'}
-setwd("~/bioinformatics/group-projects-invivo-fall-project/")
-GSE.46257 <- read_xls("Selected_GEO_datasets_raw/GSE46257_Schmeisser_2013_arsenite/GSE46257_ce_Nr35-38_counts_rpkm.xls")
+GSE.46257 <- read_xls("../Selected_GEO_datasets_raw/GSE46257_Schmeisser_2013_arsenite/GSE46257_ce_Nr35-38_counts_rpkm.xls")
 
 print(head(GSE.46257))
 sprintf("initial number of genes: %i", nrow(GSE.46257))
@@ -98,7 +94,7 @@ sprintf("initial number of genes: %i", nrow(GSE.46257))
 
 Read in ID table containing Gene Stable IDs, Transcript Stable IDs, and Gene Name
 ```{r}
-ID_table <- read.delim("~/bioinformatics/group-projects-invivo-fall-project/Cleaned_Datasets_transcript_stableID/celegans_cleaned_mart_ensembl.102.tsv", sep = "\t")
+ID_table <- read.delim("../Cleaned_Datasets_transcript_stableID/celegans_cleaned_mart_ensembl.102.tsv", sep = "\t")
 head(ID_table)
 ```
 
@@ -107,11 +103,12 @@ Convert gene stable IDs to transcript stable IDs
 head(GSE.156037)  # check the name of the ID column
                                                   # change by.x to match gene ID column
 GSE.156037_converted <- merge(GSE.156037, ID_table, by.x = "rowname", by.y = "Gene.stable.ID", all.x = FALSE, all.y = FALSE)
-GSE.156037_converted  # check which columns you want to keep, i.e. only transcript stable ID and raw counts columns
+head(GSE.156037_converted)  # check which columns you want to keep, i.e. only transcript stable ID and raw counts columns
 
 GSE.156037_converted <- GSE.156037_converted %>%
   select(Transcript.stable.ID, starts_with("S")) %>%  # select() selects the desired columns in the order you give it, ends_with() is also helpful
   rename("transcript_stable_ID" = Transcript.stable.ID)  # rename the ID column so they are all the same
+head(GSE.156037_converted)
 
 # check retention
 sprintf("original number of genes: %i", nrow(GSE.156037))
@@ -120,7 +117,7 @@ sprintf("proportion conserved: %f", nrow(GSE.156037_converted) / nrow(GSE.156037
 ```
 
 
-Select only counts columns and merge samples with different numbers of genes. The IDs are already in Transcript Stable IDs
+Select only counts columns and merge samples with different numbers of genes. Merge with gene ID table to exclude gene identifiers not in table. *This step is important for post-WGCNA functional annotation and analysis.
 ```{r GSE41205 cleanup}
 # check
 head(GSE.41205_N2)
@@ -136,10 +133,25 @@ GSE.41205_KU25 <- GSE.41205_KU25 %>%
 
 # need to use merge function because different number of rows
 GSE.41205_merged <- merge(GSE.41205_N2, GSE.41205_KU25, by="transcript_stable_ID")
+
+# exclude genes that are not in the ID table 
+GSE.41205_merged
+GSE.41205_converted <- merge(GSE.41205_merged, ID_table, by.x = "transcript_stable_ID", 
+                             by.y = "Transcript.stable.ID", all.x = FALSE, all.y = FALSE)
+head(GSE.41205_converted)  # check which columns you want to keep, i.e. only transcript stable ID and raw counts columns
+
+GSE.41205_converted <- GSE.41205_converted %>%
+  select(transcript_stable_ID, starts_with("Uniq_reads"))
+head(GSE.41205_converted)
+
+# check retention
+sprintf("original number of genes: %i", nrow(GSE.41205_merged))
+sprintf("converted number of genes: %i", nrow(GSE.41205_converted))
+sprintf("proportion conserved: %f", nrow(GSE.41205_converted) / nrow(GSE.41205_merged))
 ```
 
 
-Select only counts columns and merge samples with the same number of genes. The IDs are already in Transcript Stable IDs
+Select only counts columns and merge samples with the same number of genes. Merge with gene ID table to exclude gene identifiers not in table. *This step is important for post-WGCNA functional annotation and analysis.
 ```{r GSE63528 cleanup}
 # check
 head(GSE.63528_1)
@@ -159,6 +171,22 @@ GSE.63528_merged <- as.data.frame(bind_cols(GSE.63528_list))
 rownames(GSE.63528_merged) <- rownames(GSE.63528_1)
 GSE.63528_merged <- rownames_to_column(GSE.63528_merged, var = "transcript_stable_ID")
 GSE.63528_merged
+
+
+# exclude genes that are not in the ID table 
+GSE.63528_merged
+GSE.63528_converted <- merge(GSE.63528_merged, ID_table, by.x = "transcript_stable_ID", 
+                             by.y = "Transcript.stable.ID", all.x = FALSE, all.y = FALSE)
+head(GSE.63528_converted)  # check which columns you want to keep, i.e. only transcript stable ID and raw counts columns
+
+GSE.63528_converted <- GSE.63528_converted %>%
+  select(transcript_stable_ID, starts_with("Count"))
+head(GSE.63528_converted)
+
+# check retention
+sprintf("original number of genes: %i", nrow(GSE.63528_merged))
+sprintf("converted number of genes: %i", nrow(GSE.63528_converted))
+sprintf("proportion conserved: %f", nrow(GSE.63528_converted) / nrow(GSE.63528_merged))
 ```
 
 Convert Gene Names to Transcript Stable IDs and select only counts columns
@@ -183,8 +211,8 @@ sprintf("proportion conserved: %f", nrow(GSE.46257_converted) / nrow(GSE.46257))
 Final check of the datasets before you write them out. They should have transcript stable IDs with the same column name and only raw counts for each sample.
 ```{r check before write out}
 GSE.156037_converted
-GSE.41205_merged
-GSE.63528_merged
+GSE.41205_converted
+GSE.63528_converted
 GSE.46257_converted
 ```
 
@@ -196,16 +224,16 @@ setwd("~/bioinformatics/group-projects-invivo-fall-project/dataset_cleanup_tutor
 
                                 # what the file will be named
 write_csv(GSE.156037_converted, "GSE156037_cleaned_transcrID.csv")
-write_csv(GSE.41205_merged, "GSE41205_cleaned_transcrID.csv")
-write_csv(GSE.63528_merged, "GSE63528_cleaned_transcrID.csv")
+write_csv(GSE.41205_converted, "GSE41205_cleaned_transcrID.csv")
+write_csv(GSE.63528_converted, "GSE63528_cleaned_transcrID.csv")
 write_csv(GSE.46257_converted, "GSE46257_cleaned_transcrID.csv")
 ```
 
 ### Conclusion
-Once the cleaned datasets have been created, they can be mixed and matched and further processed for WGCNA using the pre-processing script.
+Once the cleaned datasets have been created, they can be mixed and matched and further processed for WGCNA using the pre-processing_for_WGCNA.Rmd script.
+
 
 ### Additional hypotheticals
-
 What if there are more than 2 samples in multiple files and they all have different gene counts?
 - You would need to do successive merges
 
