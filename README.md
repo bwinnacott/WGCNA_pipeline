@@ -5,12 +5,11 @@
 
 ## Project Summary
 
-This pipeline utilizes *C. elegans* gene expression data to perform a network analysis of co-expressed genes and identify gene clusters (modules) significantly correlated with experimental treatments. This method evaluates changes in expression patterns with a higher, systems-level approach than traditional differential gene expression analysis. The genes, modules, and pathways identified in this analysis serve to inform and guide future research. 
+This pipeline utilizes gene expression count data to perform a network analysis of co-expressed genes and identify gene clusters (modules) significantly correlated with experimental treatments. This method evaluates changes in expression patterns with a higher, systems-level approach than traditional differential gene expression analysis. The genes, modules, and pathways identified in this analysis serve to inform and guide future research. 
 
 ## Table of contents
 
 1. [Getting Started](#Getting_Started)
-2. [Input Data](#Input_Data)
 3. [Data Cleanup](#Data_Cleanup)
 4. [Data Pre-processing](#Data_Pre-Processing)
 5. [Running WGCNA](#Running_WGCNA)
@@ -20,7 +19,7 @@ This pipeline utilizes *C. elegans* gene expression data to perform a network an
 ## Getting_Started
 
 #### Hardware Requirements
-* System memory: 32 GB minimum
+* System memory: 32 GB suggested
   * Memory usage increases with size and number of input datasets, WGCNA parameters
 #### Software Requirements
 * R/4.0.2
@@ -35,9 +34,6 @@ This pipeline utilizes *C. elegans* gene expression data to perform a network an
 * If merging cleaned data, begin with [data pre-processing](Data_Pre-processing)
 * If running WGCNA with cleaned and processed data (available on Google Drive), begin by [running WGCNA](Running_WGCNA)
 
-## Input data
-A minimum of 15 samples is recommended for WGCNA. Therefore, if you have N experimental samples, you must find 15-N samples from public databases.
-
 ## Data_Cleanup
 For the incorporation of data from a new dataset/source, follow the [Dataset_Cleanup_Tutorial.Rmd](https://github.com/2020-bgmp/group-projects-invivo-fall-project/blob/master/dataset_cleanup_tutorial/Dataset_Cleanup_Tutorial.Rmd) instructions. 
 
@@ -45,7 +41,10 @@ Each dataset could have a unique format and require a hands-on approach to confo
 
 ## Data_Pre-processing
 
-To merge datasets, remove rRNA genes, and create the design matrix, follow the [pre-processing for WGCNA tutorial](https://github.com/2020-bgmp/group-projects-invivo-fall-project/blob/master/WGCNA/pre-processing_for_WGCNA.Rmd). 
+To merge datasets, remove rRNA genes, and create the design matrix, follow the [pre-processing for WGCNA tutorial](https://github.com/2020-bgmp/group-projects-invivo-fall-project/blob/master/WGCNA/pre-processing_for_WGCNA.Rmd). When utilizing this script, pay attention to the following:
+* The 'read in datasets' and 'merge' code blocks must be updated to incorporate new datasets. The rest of the script will run without changes.
+* Code beneath 'Comment back in for writing out raw counts' can be uncommented for use to retrieve raw counts.
+* The experiment_metadata.csv file must be hand-made with experimental meta-data. Utilize the format of the [example metadata](https://github.com/2020-bgmp/group-projects-invivo-fall-project/blob/master/WGCNA/experiment_metadata.csv) and fill in the information for any new samples as necessary. 
 
 ## Running_WGCNA
 
@@ -62,6 +61,7 @@ CorThreshold | Correlation threshold for selecting modules with a minimum of thi
 
 ## GO_Module_Enrichment
 For functional annotation, follow the [GO Module Enrichment Tutorial](https://github.com/2020-bgmp/group-projects-invivo-fall-project/blob/master/WGCNA/GO_module_enrichment.Rmd)
+Running this script, it is only necessary to adjust the 'condition' variable to the name of the experimental condition of interest. Then, run all code blocks, and the script will run its GO annotation on the hub genes for any modules that significantly correlate with that condition.
 
 ## Glossary
 
