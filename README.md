@@ -15,6 +15,7 @@ This pipeline utilizes gene expression count data to perform a network analysis 
 5. [Running WGCNA](#Running_WGCNA)
 6. [GO Module Enrichment](#GO_Module_Enrichment)
 7. [Glossary](#Glossary)
+8. [References](#References)
 
 ## Getting_Started
 
@@ -76,3 +77,25 @@ Gene Significance: A metric of biological significance of a given gene to its pa
 Hub Gene: A highly connected gene with a high module membership and gene significance
 
 Trait: Experimental condition. Can represent a pool of biological replicates
+
+## References
+
+### Datasets
+
+S. Weimer, J. Priebs, D. Kuhlow, M. Groth, S. Priebe, J. Mansfeld, T. L. Merry, S. Dubuis, B. Laube, A. F. Pfeiffer, T. J. Schulz, R. Guthke, M. Platzer, N. Zamboni, K. Zarse, M. Ristow, D-Glucosamine supplementation extends life span of nematodes and of ageing mice. *Nat Commun.* 5, 3563 (2014).
+
+B. N. Heestand, Y. Shen, W. Liu, D. B. Magner, N. Storm, C. Meharg, B. Habermann, A. Antebi, Dietary restriction induced longevity is mediated by nuclear receptor NHR-62 in Caenorhabditis elegans. *PLoS Genet.* 9, e1003651 (2013).
+
+S. Schmeisser, S. Priebe, M. Groth, S. Monajembashi, P. Hemmerich, R. Guthke, M. Platzer, M. Ristow, Neuronal ROS signaling rather than AMPK/sirtuin-mediated energy sensing links dietary restriction to lifespan extension. *Mol Metab.* 2, 92–102 (2013).
+
+K. Schmeisser, J. Mansfeld, D. Kuhlow, S. Weimer, S. Priebe, I. Heiland, M. Birringer, M. Groth, A. Segref, Y. Kanfi, N. L. Price, S. Schmeisser, S. Schuster, A. F. H. Pfeiffer, R. Guthke, M. Platzer, T. Hoppe, H. Y. Cohen, K. Zarse, D. A. Sinclair, M. Ristow, Role of sirtuins in lifespan regulation is linked to methylation of nicotinamide. *Nat Chem Biol.* 9, 693–700 (2013).
+
+### Software
+
+P. Langfelder, S. Horvath, WGCNA: an R package for weighted correlation network analysis. *BMC Bioinformatics.* 9, 559 (2008).
+
+Alexa A, Rahnenfuhrer J (2020). *topGO: Enrichment Analysis for Gene Ontology.* R package version 2.42.0.
+
+A. D. Holdorf, D. P. Higgins, A. C. Hart, P. R. Boag, G. J. Pazour, A. J. M. Walhout, A. K. Walker, WormCat: An Online Tool for Annotation and Visualization of Caenorhabditis elegans Genome-Scale Data. *Genetics.* 214, 279–294 (2020).
+
+P. Shannon, A. Markiel, O. Ozier, N. S. Baliga, J. T. Wang, D. Ramage, N. Amin, B. Schwikowski, T. Ideker, Cytoscape: A Software Environment for Integrated Models of Biomolecular Interaction Networks. *Genome Res.* 13, 2498–2504 (2003).
