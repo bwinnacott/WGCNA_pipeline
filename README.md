@@ -72,7 +72,7 @@ Eigengene: The first principle component of a module. This value is representati
 
 Module Membership: A metric of correlation between a given gene and its module's eigengene 
 
-Gene Significance: A metric of biological significance of a given gene to its pathway 
+Gene Significance: A metric of biological significance of a given gene to an experimental condition
 
 Hub Gene: A highly connected gene with a high module membership and gene significance
 
