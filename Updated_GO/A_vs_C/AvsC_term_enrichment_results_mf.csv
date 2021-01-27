@@ -1,5 +1,0 @@
-"","GO.ID","Term","Annotated","Significant","Expected","Rank in classic","classic","weight","adj_pval_classic","Significant_Genes"
-"1","GO:0042329","structural constituent of collagen and c...",13,4,0.13,1,5.7e-06,"5.7e-06",0.000114,"WBGene00000252, WBGene00001067, WBGene00004397, WBGene00005016"
-"2","GO:0004190","aspartic-type endopeptidase activity",28,4,0.27,3,0.00015,"0.00015",0.003,"WBGene00000216, WBGene00000218, WBGene00007605, WBGene00017678"
-"3","GO:0015232","heme transporter activity",7,2,0.07,5,0.00192,"0.00192",0.0384,"WBGene00010256, WBGene00019830"
-"10","GO:0042302","structural constituent of cuticle",172,9,1.68,2,4.4e-05,"0.01685",0.00088,"WBGene00000252, WBGene00000640, WBGene00000683, WBGene00000730, WBGene00001067, WBGene00004397, WBGene00004398, WBGene00005016, WBGene00005017"
